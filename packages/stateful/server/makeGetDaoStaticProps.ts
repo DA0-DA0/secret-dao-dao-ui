@@ -41,6 +41,7 @@ import { cosmos } from '@dao-dao/types/protobuf'
 import {
   CHAIN_SUBDAOS,
   CI,
+  CommonError,
   ContractName,
   DAO_CORE_ACCENT_ITEM_KEY,
   DAO_STATIC_PROPS_CACHE_SECONDS,
@@ -51,13 +52,13 @@ import {
   MAX_META_CHARS_PROPOSAL_DESCRIPTION,
   NEUTRON_GOVERNANCE_DAO,
   addressIsModule,
-  cosmWasmClientRouter,
   cosmosSdkVersionIs46OrHigher,
   decodeGovProposal,
   getChainForChainId,
   getChainGovernanceDaoDescription,
   getChainIdForAddress,
   getConfiguredGovChainByName,
+  getCosmWasmClientForChainId,
   getDaoPath,
   getDisplayNameForChainId,
   getImageUrlForChainId,
@@ -893,11 +894,7 @@ const daoCoreDumpState = async (
   // Prevent cycles by ensuring admin has not already been seen.
   previousParentAddresses?: string[]
 ): Promise<DaoCoreDumpState> => {
-  const cwClient = await retry(
-    10,
-    async (attempt) =>
-      await cosmWasmClientRouter.connect(getRpcForChainId(chainId, attempt - 1))
-  )
+  const cwClient = await getCosmWasmClientForChainId(chainId)
 
   try {
     const indexerDumpedState = await queryIndexer<IndexerDumpState>({
@@ -1001,7 +998,16 @@ const daoCoreDumpState = async (
     }
 
     // Ignore error. Fallback to querying chain below.
-    console.error(error, processError(error))
+
+    // Log if not no indexer error.
+    if (
+      !(
+        error instanceof Error &&
+        error.message === CommonError.NoIndexerForChain
+      )
+    ) {
+      console.error(error, processError(error))
+    }
   }
 
   const daoCoreClient = new DaoCoreV2QueryClient(cwClient, coreAddress)

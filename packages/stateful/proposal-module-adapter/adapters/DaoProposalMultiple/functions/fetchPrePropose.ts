@@ -5,8 +5,7 @@ import {
 } from '@dao-dao/state'
 import { Feature, FetchPreProposeFunction } from '@dao-dao/types'
 import {
-  cosmWasmClientRouter,
-  getRpcForChainId,
+  getCosmWasmClientForChainId,
   isFeatureSupportedByVersion,
 } from '@dao-dao/utils'
 
@@ -35,7 +34,7 @@ export const fetchPrePropose: FetchPreProposeFunction = async (
     // If indexer fails, fallback to querying chain.
     if (!creationPolicy) {
       const client = new DaoProposalMultipleQueryClient(
-        await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+        await getCosmWasmClientForChainId(chainId),
         proposalModuleAddress
       )
 

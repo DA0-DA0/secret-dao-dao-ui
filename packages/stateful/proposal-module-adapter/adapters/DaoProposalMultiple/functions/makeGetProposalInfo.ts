@@ -8,7 +8,7 @@ import {
   InfoResponse,
 } from '@dao-dao/types'
 import { ProposalResponse } from '@dao-dao/types/contracts/DaoProposalMultiple'
-import { cosmWasmClientRouter, getRpcForChainId } from '@dao-dao/utils'
+import { getCosmWasmClientForChainId } from '@dao-dao/utils'
 
 export const makeGetProposalInfo =
   ({
@@ -27,9 +27,7 @@ export const makeGetProposalInfo =
     let _cosmWasmClient: CosmWasmClient
     const getCosmWasmClient = async () => {
       if (!_cosmWasmClient) {
-        _cosmWasmClient = await cosmWasmClientRouter.connect(
-          getRpcForChainId(chainId)
-        )
+        _cosmWasmClient = await getCosmWasmClientForChainId(chainId)
       }
       return _cosmWasmClient
     }

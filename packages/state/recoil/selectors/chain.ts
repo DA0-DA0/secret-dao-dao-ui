@@ -58,16 +58,19 @@ import { Fee as NeutronFee } from '@dao-dao/types/protobuf/codegen/neutron/feere
 import { Params as NobleTariffParams } from '@dao-dao/types/protobuf/codegen/tariff/params'
 import {
   MAINNET,
+  SecretCosmWasmClient,
   addressIsModule,
-  cosmWasmClientRouter,
   cosmosSdkVersionIs46OrHigher,
   cosmosSdkVersionIs47OrHigher,
   cosmosValidatorToValidator,
   decodeGovProposal,
   getAllRpcResponse,
+  getCosmWasmClientForChainId,
+  getLcdForChainId,
   getNativeTokenForChainId,
   getRpcForChainId,
   retry,
+  secretCosmWasmClientRouter,
   stargateClientRouter,
 } from '@dao-dao/utils'
 
@@ -109,12 +112,25 @@ export const cosmWasmClientForChainSelector = selectorFamily<
   string
 >({
   key: 'cosmWasmClientForChain',
+  get: (chainId) => async () => await getCosmWasmClientForChainId(chainId),
+  dangerouslyAllowMutability: true,
+})
+
+export const secretCosmWasmClientForChainSelector = selectorFamily<
+  SecretCosmWasmClient,
+  string
+>({
+  key: 'secretCosmWasmClientForChain',
   get: (chainId) => async () =>
     retry(
       10,
       async (attempt) =>
-        await cosmWasmClientRouter.connect(
-          getRpcForChainId(chainId, attempt - 1)
+        await secretCosmWasmClientRouter.connect(
+          getRpcForChainId(chainId, attempt - 1),
+          {
+            chainId,
+            apiEndpoint: getLcdForChainId(chainId, attempt - 1),
+          }
         )
     ),
   dangerouslyAllowMutability: true,

@@ -76,6 +76,8 @@ export enum ChainId {
   OraichainMainnet = 'Oraichain',
   ArchwayMainnet = 'archway-1',
   InjectiveMainnet = 'injective-1',
+  SecretMainnet = 'secret-4',
+  SecretTestnet = 'pulsar-3',
 }
 
 export type BaseChainConfig = {

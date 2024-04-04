@@ -16,8 +16,7 @@ import {
   DaoProposalMultipleAdapterId,
   DaoProposalSingleAdapterId,
   NEUTRON_GOVERNANCE_DAO,
-  cosmWasmClientRouter,
-  getRpcForChainId,
+  getCosmWasmClientForChainId,
   indexToProposalModulePrefix,
   isFeatureSupportedByVersion,
   parseContractVersion,
@@ -120,7 +119,7 @@ export const fetchProposalModulesWithInfoFromChain = async (
   coreAddress: string,
   coreVersion: ContractVersion
 ): Promise<ProposalModuleWithInfo[]> => {
-  const cwClient = await cosmWasmClientRouter.connect(getRpcForChainId(chainId))
+  const cwClient = await getCosmWasmClientForChainId(chainId)
 
   let paginationStart: string | undefined
 

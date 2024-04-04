@@ -8,11 +8,15 @@ import {
   connectComet,
 } from '@cosmjs/tendermint-rpc'
 
+import { getLcdForChainId, getRpcForChainId, isSecretNetwork } from './chain'
+import { retry } from './network'
+import { SecretCosmWasmClient } from './secret'
+
 type ChainClientRoutes<T> = {
   [rpcEndpoint: string]: T
 }
 
-type HandleConnect<T> = (rpcEndpoint: string) => Promise<T>
+type HandleConnect<T, P> = (rpcEndpoint: string, ...args: P[]) => Promise<T>
 
 /*
  * This is a workaround for `@cosmjs` clients to avoid connecting to the chain more than once.
@@ -26,11 +30,11 @@ type HandleConnect<T> = (rpcEndpoint: string) => Promise<T>
  *
  * const queryResponse = await client.queryContractSmart(...);
  *  */
-class ChainClientRouter<T> {
-  private readonly handleConnect: HandleConnect<T>
+export class ChainClientRouter<T, P> {
+  private readonly handleConnect: HandleConnect<T, P>
   private instances: ChainClientRoutes<T> = {}
 
-  constructor({ handleConnect }: { handleConnect: HandleConnect<T> }) {
+  constructor({ handleConnect }: { handleConnect: HandleConnect<T, P> }) {
     this.handleConnect = handleConnect
   }
 
@@ -38,9 +42,9 @@ class ChainClientRouter<T> {
    * Connect to the chain and return the client
    * or return an existing instance of the client.
    *  */
-  async connect(rpcEndpoint: string) {
+  async connect(rpcEndpoint: string, ...args: P[]) {
     if (!this.getClientInstance(rpcEndpoint)) {
-      const instance = await this.handleConnect(rpcEndpoint)
+      const instance = await this.handleConnect(rpcEndpoint, ...args)
       this.setClientInstance(rpcEndpoint, instance)
     }
 
@@ -58,7 +62,7 @@ class ChainClientRouter<T> {
 
 /*
  * Router for connecting to `CosmWasmClient`.
- *  */
+ */
 export const cosmWasmClientRouter = new ChainClientRouter({
   handleConnect: async (rpcEndpoint: string) => {
     const httpClient = new HttpBatchClient(rpcEndpoint)
@@ -77,7 +81,7 @@ export const cosmWasmClientRouter = new ChainClientRouter({
 
 /*
  * Router for connecting to `StargateClient`.
- *  */
+ */
 export const stargateClientRouter = new ChainClientRouter({
   handleConnect: async (rpcEndpoint: string) => {
     const httpClient = new HttpBatchClient(rpcEndpoint)
@@ -93,6 +97,44 @@ export const stargateClientRouter = new ChainClientRouter({
     return await StargateClient.create(tmClient, {})
   },
 })
+
+/*
+ * Router for connecting to `SecretCosmWasmClient`.
+ */
+export const secretCosmWasmClientRouter = new ChainClientRouter({
+  handleConnect: async (
+    rpcEndpoint: string,
+    options: { chainId: string; apiEndpoint: string }
+  ) =>
+    await SecretCosmWasmClient.secretConnect(rpcEndpoint, {
+      chainId: options.chainId,
+      url: options.apiEndpoint,
+    }),
+})
+
+/**
+ * Get CosmWasmClient for the appropriate chain.
+ *
+ * Uses SecretCosmWasmClient for Secret Network mainnet and testnet.
+ *
+ * Defaults to CosmWasmClient for all other chains.
+ */
+export const getCosmWasmClientForChainId = async (
+  chainId: string
+): Promise<CosmWasmClient> =>
+  await retry(10, async (attempt) =>
+    isSecretNetwork(chainId)
+      ? await secretCosmWasmClientRouter.connect(
+          getRpcForChainId(chainId, attempt - 1),
+          {
+            chainId,
+            apiEndpoint: getLcdForChainId(chainId, attempt - 1),
+          }
+        )
+      : await cosmWasmClientRouter.connect(
+          getRpcForChainId(chainId, attempt - 1)
+        )
+  )
 
 /**
  * In response events from a transaction with a wasm event, gets the attribute

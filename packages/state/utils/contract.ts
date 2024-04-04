@@ -10,8 +10,7 @@ import { Config as NeutronCwdSubdaoTimelockSingleConfig } from '@dao-dao/types/c
 import {
   ContractName,
   INVALID_CONTRACT_ERROR_SUBSTRINGS,
-  cosmWasmClientRouter,
-  getRpcForChainId,
+  getCosmWasmClientForChainId,
   parseContractVersion,
 } from '@dao-dao/utils'
 
@@ -45,9 +44,7 @@ export const fetchContractInfo = async (
   // If indexer fails, fallback to querying chain.
   if (!info) {
     try {
-      const client = await cosmWasmClientRouter.connect(
-        getRpcForChainId(chainId)
-      )
+      const client = await getCosmWasmClientForChainId(chainId)
       const { data: contractInfo } = await client[
         'forceGetQueryClient'
       ]().wasm.queryContractRaw(contractAddress, toUtf8('contract_info'))
@@ -110,7 +107,7 @@ export const fetchPreProposeModule = async (
       // If indexer fails, fallback to querying chain.
       if (!approver) {
         const client = new DaoPreProposeApprovalSingleQueryClient(
-          await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+          await getCosmWasmClientForChainId(chainId),
           preProposeAddress
         )
 
@@ -143,7 +140,7 @@ export const fetchPreProposeModule = async (
         // If indexer fails, fallback to querying chain.
         if (!approver) {
           const client = new DaoPreProposeApproverQueryClient(
-            await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+            await getCosmWasmClientForChainId(chainId),
             preProposeApproverContract
           )
 
@@ -177,7 +174,7 @@ export const fetchPreProposeModule = async (
       // If indexer fails, fallback to querying chain.
       if (!preProposeApprovalContract) {
         const client = new DaoPreProposeApproverQueryClient(
-          await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+          await getCosmWasmClientForChainId(chainId),
           preProposeAddress
         )
 
@@ -204,7 +201,7 @@ export const fetchPreProposeModule = async (
       // If indexer fails, fallback to querying chain.
       if (!approvalDao) {
         const client = new DaoPreProposeApprovalSingleQueryClient(
-          await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+          await getCosmWasmClientForChainId(chainId),
           preProposeApprovalContract
         )
 
@@ -237,7 +234,7 @@ export const fetchPreProposeModule = async (
       // If indexer fails, fallback to querying chain.
       if (!timelockAddress) {
         const client = new NeutronCwdSubdaoPreProposeSingleQueryClient(
-          await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+          await getCosmWasmClientForChainId(chainId),
           preProposeAddress
         )
 
@@ -264,7 +261,7 @@ export const fetchPreProposeModule = async (
       // If indexer fails, fallback to querying chain.
       if (!config) {
         const client = new NeutronCwdSubdaoTimelockSingleQueryClient(
-          await cosmWasmClientRouter.connect(getRpcForChainId(chainId)),
+          await getCosmWasmClientForChainId(chainId),
           timelockAddress
         )
 
