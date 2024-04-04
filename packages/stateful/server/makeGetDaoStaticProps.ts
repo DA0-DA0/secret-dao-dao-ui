@@ -54,6 +54,7 @@ import {
   addressIsModule,
   cosmosSdkVersionIs46OrHigher,
   decodeGovProposal,
+  extractAddressFromMaybeSecretContractInfo,
   getChainForChainId,
   getChainGovernanceDaoDescription,
   getChainIdForAddress,
@@ -1017,12 +1018,9 @@ const daoCoreDumpState = async (
     throw new LegacyDaoError()
   }
 
-  const votingModuleAddress =
-    typeof dumpedState.voting_module === 'string'
-      ? dumpedState.voting_module
-      : 'addr' in dumpedState.voting_module
-      ? dumpedState.voting_module.addr
-      : ''
+  const votingModuleAddress = extractAddressFromMaybeSecretContractInfo(
+    dumpedState.voting_module
+  )
 
   const [coreVersion, { info: votingModuleInfo }] = await Promise.all([
     parseContractVersion(dumpedState.version.version),

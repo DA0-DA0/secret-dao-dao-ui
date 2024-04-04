@@ -40,6 +40,7 @@ import {
   DaoVotingCw20StakedAdapterId,
   NEUTRON_GOVERNANCE_DAO,
   VETOABLE_DAOS_ITEM_KEY_PREFIX,
+  extractAddressFromMaybeSecretContractInfo,
   getChainGovernanceDaoDescription,
   getConfiguredChainConfig,
   getDaoProposalPath,
@@ -236,12 +237,9 @@ export const daoInfoSelector = selectorFamily<
         throw new Error('DAO failed to dump state.')
       }
 
-      const votingModuleAddress =
-        typeof dumpState.voting_module === 'string'
-          ? dumpState.voting_module
-          : 'addr' in dumpState.voting_module
-          ? dumpState.voting_module.addr
-          : ''
+      const votingModuleAddress = extractAddressFromMaybeSecretContractInfo(
+        dumpState.voting_module
+      )
 
       const [
         // Non-loadables

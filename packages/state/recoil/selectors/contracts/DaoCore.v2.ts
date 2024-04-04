@@ -33,13 +33,13 @@ import {
   ProposalModulesResponse,
   SubDao,
   TotalPowerAtHeightResponse,
-  VotingModuleResponse,
   VotingPowerAtHeightResponse,
 } from '@dao-dao/types/contracts/DaoCore.v2'
 import {
   CW721_WORKAROUND_ITEM_KEY_PREFIX,
   POLYTONE_CW20_ITEM_KEY_PREFIX,
   POLYTONE_CW721_ITEM_KEY_PREFIX,
+  extractAddressFromMaybeSecretContractInfo,
   getAccount,
   getSupportedChainConfig,
   polytoneNoteProxyMapToChainIdMap,
@@ -391,7 +391,7 @@ export const pauseInfoSelector = selectorFamily<
     },
 })
 export const votingModuleSelector = selectorFamily<
-  VotingModuleResponse,
+  string,
   QueryClientParams & {
     params: Parameters<DaoCoreV2QueryClient['votingModule']>
   }
@@ -406,13 +406,15 @@ export const votingModuleSelector = selectorFamily<
           formula: 'daoCore/votingModule',
         })
       )
-      if (votingModule) {
+      if (votingModule && typeof votingModule === 'string') {
         return votingModule
       }
 
       // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
-      return await client.votingModule(...params)
+      return extractAddressFromMaybeSecretContractInfo(
+        await client.votingModule(...params)
+      )
     },
 })
 // Use listAllSubDaosSelector as it uses the indexer and implements pagination

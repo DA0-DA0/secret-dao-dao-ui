@@ -348,3 +348,10 @@ export type ActiveThreshold =
         percent: Decimal
       }
     }
+
+// Secret Network
+
+export type SecretAnyContractInfo = {
+  addr: Addr
+  code_hash: string
+}
