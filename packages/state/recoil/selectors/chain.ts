@@ -52,18 +52,23 @@ import {
   SecretCosmWasmClient,
   cosmWasmClientRouter,
   cosmosProtoRpcClientRouter,
+  addressIsModule,
   cosmosSdkVersionIs46OrHigher,
   cosmosSdkVersionIs47OrHigher,
   cosmosValidatorToValidator,
   cosmwasmProtoRpcClientRouter,
   decodeGovProposal,
   getAllRpcResponse,
+  getCosmWasmClientForChainId,
+  getLcdForChainId,
   getNativeTokenForChainId,
   ibcProtoRpcClientRouter,
   junoProtoRpcClientRouter,
   neutronProtoRpcClientRouter,
   nobleProtoRpcClientRouter,
   osmosisProtoRpcClientRouter,
+  getRpcForChainId,
+  retry,
   secretCosmWasmClientRouter,
   stargateClientRouter,
 } from '@dao-dao/utils'
@@ -99,7 +104,7 @@ export const cosmWasmClientForChainSelector = selectorFamily<
   string
 >({
   key: 'cosmWasmClientForChain',
-  get: (chainId) => async () => await cosmWasmClientRouter.connect(chainId),
+  get: (chainId) => async () => await getCosmWasmClientForChainId(chainId),
   dangerouslyAllowMutability: true,
 })
 

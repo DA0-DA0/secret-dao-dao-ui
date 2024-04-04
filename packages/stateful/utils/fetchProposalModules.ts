@@ -16,7 +16,7 @@ import { ProposalModuleWithInfo } from '@dao-dao/types/contracts/DaoCore.v2'
 import {
   DaoProposalMultipleAdapterId,
   DaoProposalSingleAdapterId,
-  cosmWasmClientRouter,
+  getCosmWasmClientForChainId,
   indexToProposalModulePrefix,
   isFeatureSupportedByVersion,
   parseContractVersion,
@@ -118,7 +118,7 @@ export const fetchProposalModulesWithInfoFromChain = async (
   coreAddress: string,
   coreVersion: ContractVersion
 ): Promise<ProposalModuleWithInfo[]> => {
-  const cwClient = await cosmWasmClientRouter.connect(chainId)
+  const cwClient = await getCosmWasmClientForChainId(chainId)
 
   let paginationStart: string | undefined
 
