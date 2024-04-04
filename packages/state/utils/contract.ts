@@ -11,6 +11,7 @@ import {
   ContractName,
   INVALID_CONTRACT_ERROR_SUBSTRINGS,
   getCosmWasmClientForChainId,
+  isSecretNetwork,
   parseContractVersion,
 } from '@dao-dao/utils'
 
@@ -45,11 +46,23 @@ export const fetchContractInfo = async (
   if (!info) {
     try {
       const client = await getCosmWasmClientForChainId(chainId)
-      const { data: contractInfo } = await client[
-        'forceGetQueryClient'
-      ]().wasm.queryContractRaw(contractAddress, toUtf8('contract_info'))
-      if (contractInfo) {
-        info = JSON.parse(fromUtf8(contractInfo))
+
+      if (isSecretNetwork(chainId)) {
+        // Secret Network does not allow accessing raw state directly, so this
+        // will only work if the contract has an `info` query, which all our DAO
+        // contracts do, but not all DAO contracts do.
+        info = (
+          await client.queryContractSmart(contractAddress, {
+            info: {},
+          })
+        )?.info
+      } else {
+        const { data: contractInfo } = await client[
+          'forceGetQueryClient'
+        ]().wasm.queryContractRaw(contractAddress, toUtf8('contract_info'))
+        if (contractInfo) {
+          info = JSON.parse(fromUtf8(contractInfo))
+        }
       }
     } catch (err) {
       if (

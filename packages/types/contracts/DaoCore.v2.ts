@@ -76,7 +76,7 @@ export interface DumpStateResponse {
   proposal_modules: ProposalModule[]
   total_proposal_module_count: number
   version: ContractVersionInfo
-  voting_module: Addr
+  voting_module: Addr | SecretVotingModuleInfo
 }
 export interface Config {
   automatically_add_cw20s: boolean
@@ -309,4 +309,11 @@ export interface VotingPowerAtHeightResponse {
 
 export type ProposalModuleWithInfo = ProposalModule & {
   info?: ContractVersionInfo
+}
+
+// Secret Network
+
+export type SecretVotingModuleInfo = {
+  addr: Addr
+  code_hash: string
 }

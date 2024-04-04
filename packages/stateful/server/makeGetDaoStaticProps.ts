@@ -950,7 +950,7 @@ const daoCoreDumpState = async (
         // use one here.
         const client = new DaoVotingCw20StakedQueryClient(
           cwClient,
-          indexerDumpedState.voting_module
+          indexerDumpedState.voting_module as string
         )
         isActive = (await client.isActive()).active
         activeThreshold =
@@ -964,7 +964,7 @@ const daoCoreDumpState = async (
         ...indexerDumpedState,
         version: coreVersion,
         votingModule: {
-          address: indexerDumpedState.voting_module,
+          address: indexerDumpedState.voting_module as string,
           info: indexerDumpedState.votingModuleInfo,
         },
         activeProposalModules: indexerDumpedState.proposal_modules.filter(
@@ -1017,9 +1017,16 @@ const daoCoreDumpState = async (
     throw new LegacyDaoError()
   }
 
+  const votingModuleAddress =
+    typeof dumpedState.voting_module === 'string'
+      ? dumpedState.voting_module
+      : 'addr' in dumpedState.voting_module
+      ? dumpedState.voting_module.addr
+      : ''
+
   const [coreVersion, { info: votingModuleInfo }] = await Promise.all([
     parseContractVersion(dumpedState.version.version),
-    (await cwClient.queryContractSmart(dumpedState.voting_module, {
+    (await cwClient.queryContractSmart(votingModuleAddress, {
       info: {},
     })) as InfoResponse,
   ])
@@ -1060,7 +1067,7 @@ const daoCoreDumpState = async (
     // one here.
     const client = new DaoVotingCw20StakedQueryClient(
       cwClient,
-      dumpedState.voting_module
+      votingModuleAddress
     )
     isActive = (await client.isActive()).active
     activeThreshold = (await client.activeThreshold()).active_threshold || null
@@ -1162,7 +1169,7 @@ const daoCoreDumpState = async (
     ...dumpedState,
     version: coreVersion,
     votingModule: {
-      address: dumpedState.voting_module,
+      address: votingModuleAddress,
       info: votingModuleInfo,
     },
     activeProposalModules: proposalModules.filter(

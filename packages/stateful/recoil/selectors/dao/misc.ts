@@ -236,6 +236,13 @@ export const daoInfoSelector = selectorFamily<
         throw new Error('DAO failed to dump state.')
       }
 
+      const votingModuleAddress =
+        typeof dumpState.voting_module === 'string'
+          ? dumpState.voting_module
+          : 'addr' in dumpState.voting_module
+          ? dumpState.voting_module.addr
+          : ''
+
       const [
         // Non-loadables
         [
@@ -258,7 +265,7 @@ export const daoInfoSelector = selectorFamily<
               chainId,
             }),
             contractInfoSelector({
-              contractAddress: dumpState.voting_module,
+              contractAddress: votingModuleAddress,
               chainId,
             }),
             daoCoreProposalModulesSelector({
@@ -287,12 +294,12 @@ export const daoInfoSelector = selectorFamily<
             // All voting modules use the same active threshold queries, so it's
             // safe to use the cw20-staked selector.
             DaoVotingCw20StakedSelectors.isActiveSelector({
-              contractAddress: dumpState.voting_module,
+              contractAddress: votingModuleAddress,
               chainId,
               params: [],
             }),
             DaoVotingCw20StakedSelectors.activeThresholdSelector({
-              contractAddress: dumpState.voting_module,
+              contractAddress: votingModuleAddress,
               chainId,
               params: [],
             }),
@@ -341,7 +348,7 @@ export const daoInfoSelector = selectorFamily<
         coreAddress,
         coreVersion,
         supportedFeatures: getSupportedFeatures(coreVersion),
-        votingModuleAddress: dumpState.voting_module,
+        votingModuleAddress,
         votingModuleContractName,
         proposalModules,
         name: dumpState.config.name,
