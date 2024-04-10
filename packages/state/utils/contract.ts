@@ -5,11 +5,13 @@ import {
   PreProposeModule,
   PreProposeModuleType,
   PreProposeModuleTypedConfig,
+  SecretAnyContractInfo,
 } from '@dao-dao/types'
 import { Config as NeutronCwdSubdaoTimelockSingleConfig } from '@dao-dao/types/contracts/NeutronCwdSubdaoTimelockSingle'
 import {
   ContractName,
   INVALID_CONTRACT_ERROR_SUBSTRINGS,
+  extractAddressFromMaybeSecretContractInfo,
   getCosmWasmClientForChainId,
   isSecretNetwork,
   parseContractVersion,
@@ -157,7 +159,9 @@ export const fetchPreProposeModule = async (
             preProposeApproverContract
           )
 
-          approver = await client.dao()
+          approver = extractAddressFromMaybeSecretContractInfo(
+            await client.dao()
+          )
         }
       }
 
@@ -191,11 +195,13 @@ export const fetchPreProposeModule = async (
           preProposeAddress
         )
 
-        preProposeApprovalContract = (await client.queryExtension({
-          msg: {
-            pre_propose_approval_contract: {},
-          },
-        })) as string
+        preProposeApprovalContract = extractAddressFromMaybeSecretContractInfo(
+          (await client.queryExtension({
+            msg: {
+              pre_propose_approval_contract: {},
+            },
+          })) as string | SecretAnyContractInfo
+        )
       }
 
       let approvalDao: string | undefined
@@ -218,7 +224,9 @@ export const fetchPreProposeModule = async (
           preProposeApprovalContract
         )
 
-        approvalDao = await client.dao()
+        approvalDao = extractAddressFromMaybeSecretContractInfo(
+          await client.dao()
+        )
       }
 
       typedConfig = {
