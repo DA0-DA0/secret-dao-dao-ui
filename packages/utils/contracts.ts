@@ -39,6 +39,11 @@ export const indexToProposalModulePrefix = (index: number) => {
   return prefix
 }
 
+type SupportedClient =
+  | SigningCosmWasmClient
+  | SigningStargateClient
+  | SecretNetworkClient
+
 /**
  * Instantiate a smart contract from any supported client.
  *
@@ -48,7 +53,7 @@ export const indexToProposalModulePrefix = (index: number) => {
  * no longer reliable.
  */
 export const instantiateSmartContract = async (
-  client: SigningCosmWasmClient | SigningStargateClient | SecretNetworkClient,
+  client: SupportedClient | (() => Promise<SupportedClient>),
   sender: string,
   codeId: number,
   label: string,
@@ -58,6 +63,8 @@ export const instantiateSmartContract = async (
   fee = CHAIN_GAS_MULTIPLIER,
   memo: string | undefined = undefined
 ): Promise<string> => {
+  client = typeof client === 'function' ? await client() : client
+
   if (client instanceof SecretNetworkClient) {
     const { transactionHash, arrayLog } =
       await client.tx.compute.instantiateContract(
@@ -130,7 +137,7 @@ export const instantiateSmartContract = async (
  * Execute a smart contract from any supported client.
  */
 export const executeSmartContract = async (
-  client: SigningCosmWasmClient | SigningStargateClient | SecretNetworkClient,
+  client: SupportedClient | (() => Promise<SupportedClient>),
   sender: string,
   contractAddress: string,
   msg: object,
@@ -138,6 +145,8 @@ export const executeSmartContract = async (
   fee = CHAIN_GAS_MULTIPLIER,
   memo: string | undefined = undefined
 ): Promise<ExecuteResult> => {
+  client = typeof client === 'function' ? await client() : client
+
   if (client instanceof SecretNetworkClient) {
     const result = await client.tx.compute.executeContract(
       {
