@@ -43,6 +43,8 @@ import {
   pstakeProtoRegistry,
   regenAminoConverters,
   regenProtoRegistry,
+  secretAminoConverters,
+  secretProtoRegistry,
   publicawesomeAminoConverters as stargazeAminoConverters,
   publicawesomeProtoRegistry as stargazeProtoRegistry,
 } from './codegen'
@@ -558,6 +560,7 @@ export const PROTOBUF_TYPES: ReadonlyArray<[string, GeneratedType]> = [
   ...circleProtoRegistry,
   ...kujiraProtoRegistry,
   ...pstakeProtoRegistry,
+  ...secretProtoRegistry,
   // Not a query or TX so it isn't included in any of the registries. But we
   // want to decode this because it appears in gov props. We need to find a
   // better way to collect all generated types in a single registry...
@@ -596,6 +599,7 @@ export const aminoTypes = new AminoTypes({
   ...circleAminoConverters,
   ...kujiraAminoConverters,
   ...pstakeAminoConverters,
+  ...secretAminoConverters,
 })
 
 // Encodes a protobuf message value from its JSON representation into a byte

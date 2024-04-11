@@ -116,6 +116,10 @@ telescope({
           'pstake.lscosmos.v1beta1',
           'pstake.ratesync.v1beta1',
           'cosmos.adminmodule.adminmodule',
+          'secret.compute.v1beta1',
+          'secret.emergencybutton.v1beta1',
+          'secret.intertx.v1beta1',
+          'secret.registration.v1beta1',
         ],
       },
       // excluded: {

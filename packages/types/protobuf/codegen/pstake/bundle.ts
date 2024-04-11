@@ -19,24 +19,24 @@ import * as _286 from "./ratesync/v1beta1/params";
 import * as _287 from "./ratesync/v1beta1/query";
 import * as _288 from "./ratesync/v1beta1/ratesync";
 import * as _289 from "./ratesync/v1beta1/tx";
-import * as _531 from "./liquidstake/v1beta1/tx.amino";
-import * as _532 from "./liquidstakeibc/v1beta1/msgs.amino";
-import * as _533 from "./lscosmos/v1beta1/msgs.amino";
-import * as _534 from "./ratesync/v1beta1/tx.amino";
-import * as _535 from "./liquidstake/v1beta1/tx.registry";
-import * as _536 from "./liquidstakeibc/v1beta1/msgs.registry";
-import * as _537 from "./lscosmos/v1beta1/msgs.registry";
-import * as _538 from "./ratesync/v1beta1/tx.registry";
-import * as _539 from "./liquidstake/v1beta1/query.rpc.Query";
-import * as _540 from "./liquidstakeibc/v1beta1/query.rpc.Query";
-import * as _541 from "./lscosmos/v1beta1/query.rpc.Query";
-import * as _542 from "./ratesync/v1beta1/query.rpc.Query";
-import * as _543 from "./liquidstake/v1beta1/tx.rpc.msg";
-import * as _544 from "./liquidstakeibc/v1beta1/msgs.rpc.msg";
-import * as _545 from "./lscosmos/v1beta1/msgs.rpc.msg";
-import * as _546 from "./ratesync/v1beta1/tx.rpc.msg";
-import * as _603 from "./rpc.query";
-import * as _604 from "./rpc.tx";
+import * as _545 from "./liquidstake/v1beta1/tx.amino";
+import * as _546 from "./liquidstakeibc/v1beta1/msgs.amino";
+import * as _547 from "./lscosmos/v1beta1/msgs.amino";
+import * as _548 from "./ratesync/v1beta1/tx.amino";
+import * as _549 from "./liquidstake/v1beta1/tx.registry";
+import * as _550 from "./liquidstakeibc/v1beta1/msgs.registry";
+import * as _551 from "./lscosmos/v1beta1/msgs.registry";
+import * as _552 from "./ratesync/v1beta1/tx.registry";
+import * as _553 from "./liquidstake/v1beta1/query.rpc.Query";
+import * as _554 from "./liquidstakeibc/v1beta1/query.rpc.Query";
+import * as _555 from "./lscosmos/v1beta1/query.rpc.Query";
+import * as _556 from "./ratesync/v1beta1/query.rpc.Query";
+import * as _557 from "./liquidstake/v1beta1/tx.rpc.msg";
+import * as _558 from "./liquidstakeibc/v1beta1/msgs.rpc.msg";
+import * as _559 from "./lscosmos/v1beta1/msgs.rpc.msg";
+import * as _560 from "./ratesync/v1beta1/tx.rpc.msg";
+import * as _630 from "./rpc.query";
+import * as _631 from "./rpc.tx";
 export namespace pstake {
   export namespace liquidstake {
     export const v1beta1 = {
@@ -44,10 +44,10 @@ export namespace pstake {
       ..._270,
       ..._271,
       ..._272,
-      ..._531,
-      ..._535,
-      ..._539,
-      ..._543
+      ..._545,
+      ..._549,
+      ..._553,
+      ..._557
     };
   }
   export namespace liquidstakeibc {
@@ -57,10 +57,10 @@ export namespace pstake {
       ..._275,
       ..._276,
       ..._277,
-      ..._532,
-      ..._536,
-      ..._540,
-      ..._544
+      ..._546,
+      ..._550,
+      ..._554,
+      ..._558
     };
   }
   export namespace lscosmos {
@@ -71,10 +71,10 @@ export namespace pstake {
       ..._281,
       ..._282,
       ..._283,
-      ..._533,
-      ..._537,
-      ..._541,
-      ..._545
+      ..._547,
+      ..._551,
+      ..._555,
+      ..._559
     };
   }
   export namespace ratesync {
@@ -85,14 +85,14 @@ export namespace pstake {
       ..._287,
       ..._288,
       ..._289,
-      ..._534,
-      ..._538,
-      ..._542,
-      ..._546
+      ..._548,
+      ..._552,
+      ..._556,
+      ..._560
     };
   }
   export const ClientFactory = {
-    ..._603,
-    ..._604
+    ..._630,
+    ..._631
   };
 }
