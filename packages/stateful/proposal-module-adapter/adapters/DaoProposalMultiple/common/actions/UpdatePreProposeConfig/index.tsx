@@ -160,7 +160,7 @@ export const makeUpdatePreProposeConfigActionMaker =
               denomOrAddress:
                 'native' in configLoading.data.deposit_info.denom
                   ? configLoading.data.deposit_info.denom.native
-                  : configLoading.data.deposit_info.denom.cw20,
+                  : configLoading.data.deposit_info.denom.snip20[0],
             })
           : constSelector(undefined)
       )
@@ -200,7 +200,7 @@ export const makeUpdatePreProposeConfigActionMaker =
                 ? governanceTokenDenomOrAddress
                 : 'native' in config.deposit_info.denom
                 ? config.deposit_info.denom.native
-                : config.deposit_info.denom.cw20,
+                : config.deposit_info.denom.snip20[0],
               token,
               refundPolicy: config.deposit_info.refund_policy,
             }
@@ -236,6 +236,14 @@ export const makeUpdatePreProposeConfigActionMaker =
             throw new Error(t('error.loadingData'))
           }
 
+          if (
+            depositRequired &&
+            depositInfo.type === 'cw20' &&
+            !depositInfo.token?.snip20CodeHash
+          ) {
+            throw new Error('Missing SNIP-20 code hash')
+          }
+
           const updateConfigMessage: ExecuteMsg = {
             update_config: {
               deposit_info: depositRequired
@@ -266,7 +274,10 @@ export const makeUpdatePreProposeConfigActionMaker =
                                     }
                                   : // depositInfo.type === 'cw20'
                                     {
-                                      cw20: depositInfo.denomOrAddress,
+                                      snip20: [
+                                        depositInfo.denomOrAddress,
+                                        depositInfo.token?.snip20CodeHash || '',
+                                      ],
                                     },
                             },
                           },
@@ -327,7 +338,7 @@ export const makeUpdatePreProposeConfigActionMaker =
                 denomOrAddress:
                   'native' in configDepositInfo.denom.token.denom
                     ? configDepositInfo.denom.token.denom.native
-                    : configDepositInfo.denom.token.denom.cw20,
+                    : configDepositInfo.denom.token.denom.snip20[0],
               })
           : constSelector(undefined)
       )

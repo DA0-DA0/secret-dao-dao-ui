@@ -6,7 +6,6 @@ import {
 } from '@cosmjs/cosmwasm-stargate'
 
 import {
-  Addr,
   Coin,
   Duration,
   InfoResponse,
@@ -19,7 +18,7 @@ import {
   MultipleChoiceOptions,
   MultipleChoiceVote,
   PreProposeInfo,
-  ProposalCreationPolicyResponse,
+  ProposalCreationPolicy,
   ProposalListResponse,
   ProposalResponse,
   VoteListResponse,
@@ -67,10 +66,10 @@ export interface DaoProposalMultipleReadOnlyInterface {
     proposalId: number
     startAfter?: string
   }) => Promise<VoteListResponse>
-  proposalCreationPolicy: () => Promise<ProposalCreationPolicyResponse>
+  proposalCreationPolicy: () => Promise<ProposalCreationPolicy>
   proposalHooks: () => Promise<HooksResponse>
   voteHooks: () => Promise<HooksResponse>
-  dao: () => Promise<Addr | SecretAnyContractInfo>
+  dao: () => Promise<SecretAnyContractInfo>
   info: () => Promise<InfoResponse>
 }
 export class DaoProposalMultipleQueryClient
@@ -176,12 +175,11 @@ export class DaoProposalMultipleQueryClient
       },
     })
   }
-  proposalCreationPolicy =
-    async (): Promise<ProposalCreationPolicyResponse> => {
-      return this.client.queryContractSmart(this.contractAddress, {
-        proposal_creation_policy: {},
-      })
-    }
+  proposalCreationPolicy = async (): Promise<ProposalCreationPolicy> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      proposal_creation_policy: {},
+    })
+  }
 
   proposalHooks = async (): Promise<HooksResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
@@ -193,7 +191,7 @@ export class DaoProposalMultipleQueryClient
       vote_hooks: {},
     })
   }
-  dao = async (): Promise<Addr | SecretAnyContractInfo> => {
+  dao = async (): Promise<SecretAnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       dao: {},
     })

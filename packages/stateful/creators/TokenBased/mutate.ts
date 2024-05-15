@@ -37,9 +37,7 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
 ) => {
   const isNative = !mustGetSupportedChainConfig(chainId)?.createWithCw20
 
-  let votingModuleAdapterInstantiateMsg:
-    | DaoVotingTokenStakedInstantiateMsg
-    | DaoVotingCw20StakedInstantiateMsg
+  let votingModuleAdapterInstantiateMsg: DaoVotingCw20StakedInstantiateMsg
 
   const active_threshold: ActiveThreshold | null = activeThreshold?.enabled
     ? !activeThreshold.type || activeThreshold.type === 'percent'
@@ -81,91 +79,51 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
         )
     ).toString()
 
-    votingModuleAdapterInstantiateMsg = isNative
-      ? {
-          active_threshold,
-          token_info: {
-            new: {
-              token_issuer_code_id: codeIds.CwTokenfactoryIssuerMain,
-              subdenom: symbol.toLowerCase(),
-              initial_balances: microInitialBalances,
-              initial_dao_balance: microInitialTreasuryBalance,
-              metadata: {
-                additional_denom_units: [
-                  {
-                    aliases: [],
-                    denom: symbol,
-                    exponent: `${NEW_DAO_TOKEN_DECIMALS}`,
-                  },
-                ],
-                description: `${daoName}'s Governance Token`,
-                display: symbol,
-                name,
-                symbol,
-              },
-            },
-          },
+    votingModuleAdapterInstantiateMsg = {
+      active_threshold,
+      token_info: {
+        new: {
+          code_id: codeIds.Snip20Base.codeId,
+          decimals: NEW_DAO_TOKEN_DECIMALS,
+          initial_balances: microInitialBalances,
+          initial_dao_balance: microInitialTreasuryBalance,
+          label: name,
+          marketing: imageUrl ? { logo: { url: imageUrl } } : null,
+          name,
+          staking_code_id: codeIds.Snip20Stake.codeId,
+          symbol,
           unstaking_duration:
             convertDurationWithUnitsToDuration(unstakingDuration),
-        }
-      : {
-          active_threshold,
-          token_info: {
-            new: {
-              code_id: codeIds.Cw20Base ?? -1,
-              decimals: NEW_DAO_TOKEN_DECIMALS,
-              initial_balances: microInitialBalances,
-              initial_dao_balance: microInitialTreasuryBalance,
-              label: name,
-              marketing: imageUrl ? { logo: { url: imageUrl } } : null,
-              name,
-              staking_code_id: codeIds.Cw20Stake ?? -1,
-              symbol,
-              unstaking_duration:
-                convertDurationWithUnitsToDuration(unstakingDuration),
-            },
-          },
-        }
+        },
+      },
+    }
   } else {
     if (!existingTokenDenomOrAddress) {
       throw new Error(t('error.missingGovernanceTokenDenom'))
     }
 
-    votingModuleAdapterInstantiateMsg = isNative
-      ? {
-          active_threshold,
-          token_info: {
-            existing: {
-              denom: existingTokenDenomOrAddress,
-            },
-          },
-          unstaking_duration:
-            unstakingDuration.value === 0
-              ? null
-              : convertDurationWithUnitsToDuration(unstakingDuration),
-        }
-      : {
-          active_threshold,
-          token_info: {
-            existing: {
-              address: existingTokenDenomOrAddress,
-              staking_contract:
-                customStakingAddress !== undefined
-                  ? {
-                      existing: {
-                        staking_contract_address: customStakingAddress,
-                      },
-                    }
-                  : {
-                      new: {
-                        staking_code_id: codeIds.Cw20Stake ?? -1,
-                        unstaking_duration:
-                          convertDurationWithUnitsToDuration(unstakingDuration),
-                      },
-                    },
-            },
-          },
-        }
+    votingModuleAdapterInstantiateMsg = {
+      active_threshold,
+      token_info: {
+        existing: {
+          address: existingTokenDenomOrAddress,
+          staking_contract:
+            customStakingAddress !== undefined
+              ? {
+                  existing: {
+                    staking_contract_address: customStakingAddress,
+                  },
+                }
+              : {
+                  new: {
+                    staking_code_id: codeIds.Snip20Stake.codeId,
+                    unstaking_duration:
+                      convertDurationWithUnitsToDuration(unstakingDuration),
+                  },
+                },
+        },
+      },
+    }
   }
 
   // Validate and throw error if invalid according to JSON schema.
@@ -178,9 +136,8 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
 
   msg.voting_module_instantiate_info = {
     admin: { core_module: {} },
-    code_id: isNative
-      ? codeIds.DaoVotingTokenStaked
-      : codeIds.DaoVotingCw20Staked ?? -1,
+    code_id: codeIds.DaoVotingSnip20Staked.codeId,
+    code_hash: codeIds.DaoVotingSnip20Staked.codeHash,
     label: `DAO_${daoName.trim()}_${TokenBasedCreatorId}_${
       isNative ? 'native' : 'cw20'
     }`,

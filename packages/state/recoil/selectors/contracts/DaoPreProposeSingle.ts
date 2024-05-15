@@ -2,7 +2,7 @@ import { selectorFamily } from 'recoil'
 
 import { WithChainId } from '@dao-dao/types'
 import {
-  ConfigResponse,
+  Config,
   DepositInfoResponse,
 } from '@dao-dao/types/contracts/DaoPreProposeSingle'
 import { extractAddressFromMaybeSecretContractInfo } from '@dao-dao/utils'
@@ -13,7 +13,6 @@ import {
 } from '../../../contracts/DaoPreProposeSingle'
 import { signingCosmWasmClientAtom } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -64,17 +63,6 @@ export const proposalModuleSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const proposalModule = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeSingle/proposalModule',
-        })
-      )
-      if (proposalModule && typeof proposalModule === 'string') {
-        return proposalModule
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return extractAddressFromMaybeSecretContractInfo(
         await client.proposalModule(...params)
@@ -91,17 +79,6 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeSingle/dao',
-        })
-      )
-      if (dao && typeof dao === 'string') {
-        return dao
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return extractAddressFromMaybeSecretContractInfo(
         await client.dao(...params)
@@ -109,7 +86,7 @@ export const daoSelector = selectorFamily<
     },
 })
 export const configSelector = selectorFamily<
-  ConfigResponse,
+  Config,
   QueryClientParams & {
     params: Parameters<DaoPreProposeSingleQueryClient['config']>
   }
@@ -118,17 +95,6 @@ export const configSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const config = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeSingle/config',
-        })
-      )
-      if (config) {
-        return config
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.config(...params)
     },
@@ -143,18 +109,6 @@ export const depositInfoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const depositInfo = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeSingle/depositInfo',
-          args: params[0],
-        })
-      )
-      if (depositInfo) {
-        return depositInfo
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.depositInfo(...params)
     },

@@ -1,9 +1,5 @@
-import {
-  ContractVersion,
-  PreProposeModuleType,
-  ProposalModuleAdapter,
-} from '@dao-dao/types'
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { PreProposeModuleType, ProposalModuleAdapter } from '@dao-dao/types'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
   DAO_PROPOSAL_SINGLE_CONTRACT_NAMES,
   DaoProposalSingleAdapterId,
@@ -13,7 +9,6 @@ import {
   NewProposal,
   depositInfoSelector as makeDepositInfoSelector,
   makeUpdatePreProposeSingleConfigActionMaker,
-  makeUpdateProposalConfigV1ActionMaker,
   makeUpdateProposalConfigV2ActionMaker,
   makeUsePublishProposal,
   maxVotingPeriodSelector,
@@ -83,10 +78,9 @@ export const DaoProposalSingleAdapter: ProposalModuleAdapter<
           actionData: [],
         }),
         newProposalFormTitleKey: 'title',
-        updateConfigActionMaker: (!options.proposalModule.version ||
-          options.proposalModule.version === ContractVersion.V1
-          ? makeUpdateProposalConfigV1ActionMaker
-          : makeUpdateProposalConfigV2ActionMaker)(options.proposalModule),
+        updateConfigActionMaker: makeUpdateProposalConfigV2ActionMaker(
+          options.proposalModule
+        ),
         updatePreProposeConfigActionMaker:
           makeUpdatePreProposeSingleConfigActionMaker(options.proposalModule),
       },

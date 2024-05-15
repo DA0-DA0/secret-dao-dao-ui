@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import TimeAgo from 'react-timeago'
 import { useRecoilValue } from 'recoil'
 
-import { DaoProposalSingleCommonSelectors } from '@dao-dao/state'
+import { DaoProposalSingleV2Selectors } from '@dao-dao/state'
 import {
   CopyToClipboardUnderline,
   IconButtonLink,
@@ -30,12 +30,11 @@ import {
 import {
   BaseProposalStatusAndInfoProps,
   CheckedDepositInfo,
-  ContractVersion,
   DepositRefundPolicy,
   PreProposeModuleType,
   ProposalStatusEnum,
 } from '@dao-dao/types'
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
   formatDateTimeTz,
   formatPercentOf100,
@@ -45,7 +44,6 @@ import {
 import { ButtonLink, SuspenseLoader } from '../../../../components'
 import { EntityDisplay } from '../../../../components/EntityDisplay'
 import {
-  CwProposalSingleV1Hooks,
   DaoProposalSingleV2Hooks,
   useAwaitNextBlock,
   useProposalActionState,
@@ -134,7 +132,7 @@ const InnerProposalStatusAndInfo = ({
   const { address: walletAddress = '' } = useWallet()
 
   const config = useRecoilValue(
-    DaoProposalSingleCommonSelectors.configSelector({
+    DaoProposalSingleV2Selectors.configSelector({
       chainId,
       contractAddress: proposalModule.address,
     })
@@ -176,19 +174,11 @@ const InnerProposalStatusAndInfo = ({
 
   const timeAgoFormatter = useTranslatedTimeDeltaFormatter({ words: false })
 
-  const executeProposal = (
-    proposalModule.version === ContractVersion.V1
-      ? CwProposalSingleV1Hooks.useExecute
-      : DaoProposalSingleV2Hooks.useExecute
-  )({
+  const executeProposal = DaoProposalSingleV2Hooks.useExecute({
     contractAddress: proposalModule.address,
     sender: walletAddress,
   })
-  const closeProposal = (
-    proposalModule.version === ContractVersion.V1
-      ? CwProposalSingleV1Hooks.useClose
-      : DaoProposalSingleV2Hooks.useClose
-  )({
+  const closeProposal = DaoProposalSingleV2Hooks.useClose({
     contractAddress: proposalModule.address,
     sender: walletAddress,
   })

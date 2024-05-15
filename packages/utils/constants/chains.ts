@@ -26,7 +26,6 @@ export const SUPPORTED_CHAINS: SupportedChainConfig[] = [
       wallet: 'https://testnet.ping.pub/secret/account/REPLACE',
     },
     codeIds: {
-      // https://github.com/CosmWasm/cw-plus
       // TODO(secret-testnet)
       Cw1Whitelist: {
         codeId: -1,
@@ -37,7 +36,6 @@ export const SUPPORTED_CHAINS: SupportedChainConfig[] = [
         codeHash:
           '9b4855300c6d560b54c1c844ce9b950152b578e35f5d8582c9f3b4eb50ea1c5e',
       },
-      // SNIP20
       Snip20Base: {
         codeId: 7377,
         codeHash:
@@ -48,7 +46,6 @@ export const SUPPORTED_CHAINS: SupportedChainConfig[] = [
         codeHash:
           '68fc4b624d3dca328d0186b60f6b57a4edb2e644f2e881790dae479b4ee795a9',
       },
-      // SNIP721
       Snip721Base: {
         codeId: 7385,
         codeHash:

@@ -23,6 +23,7 @@ import {
   getFallbackImage,
   getIbcTransferInfoFromChannel,
   getTokenForChainIdAndDenom,
+  isSecretNetwork,
   isValidTokenFactoryDenom,
   isValidWalletAddress,
 } from '@dao-dao/utils'
@@ -36,7 +37,7 @@ import {
   nativeDelegationInfoSelector,
   nativeDenomBalanceSelector,
 } from './chain'
-import { isDaoSelector } from './contract'
+import { isDaoSelector, secretContractCodeHashSelector } from './contract'
 import { Cw20BaseSelectors, DaoCoreV2Selectors } from './contracts'
 import { querySnapperSelector } from './indexer'
 import { osmosisUsdPriceSelector } from './osmosis'
@@ -80,6 +81,17 @@ export const genericTokenSelector = selectorFamily<
           decimals: skipAsset.decimals || 0,
           imageUrl: skipAsset.logo_uri || getFallbackImage(denomOrAddress),
           source,
+          snip20CodeHash:
+            isSecretNetwork(skipAsset.chain_id) &&
+            skipAsset.is_cw20 &&
+            skipAsset.token_contract
+              ? get(
+                  secretContractCodeHashSelector({
+                    chainId: skipAsset.chain_id,
+                    contractAddress: skipAsset.token_contract,
+                  })
+                )
+              : undefined,
         }
       } else if (source.chainId !== chainId) {
         // If Skip API does not have the info, check if Skip API has the source
@@ -100,6 +112,17 @@ export const genericTokenSelector = selectorFamily<
             imageUrl:
               skipSourceAsset.logo_uri || getFallbackImage(denomOrAddress),
             source,
+            snip20CodeHash:
+              isSecretNetwork(skipSourceAsset.chain_id) &&
+              skipSourceAsset.is_cw20 &&
+              skipSourceAsset.token_contract
+                ? get(
+                    secretContractCodeHashSelector({
+                      chainId: skipSourceAsset.chain_id,
+                      contractAddress: skipSourceAsset.token_contract,
+                    })
+                  )
+                : undefined,
           }
         }
       }
@@ -182,6 +205,15 @@ export const genericTokenSelector = selectorFamily<
         decimals: tokenInfo.decimals,
         imageUrl,
         source,
+        snip20CodeHash:
+          isSecretNetwork(chainId) && type === TokenType.Cw20
+            ? get(
+                secretContractCodeHashSelector({
+                  chainId,
+                  contractAddress: denomOrAddress,
+                })
+              )
+            : undefined,
       }
     },
 })

@@ -42,11 +42,11 @@ export const InstantiateTokenSwap: ActionComponent<
     chainContext,
   } = useActionOptions()
 
-  const cwTokenSwapCodeId =
+  const cwTokenSwapCodeInfo =
     chainContext.type === ActionChainContextType.Supported
       ? chainContext.config.codeIds?.CwTokenSwap
       : undefined
-  if (!cwTokenSwapCodeId) {
+  if (!cwTokenSwapCodeInfo) {
     throw new Error('Unsupported chain.')
   }
 
@@ -123,7 +123,7 @@ export const InstantiateTokenSwap: ActionComponent<
       const contractAddress = await instantiateSmartContract(
         getSigningClient,
         walletAddress,
-        cwTokenSwapCodeId,
+        cwTokenSwapCodeInfo.codeId,
         'Token Swap',
         instantiateMsg
       )
@@ -149,7 +149,7 @@ export const InstantiateTokenSwap: ActionComponent<
       setInstantiating(false)
     }
   }, [
-    cwTokenSwapCodeId,
+    cwTokenSwapCodeInfo,
     getSigningClient,
     props.data,
     props.fieldNamePrefix,

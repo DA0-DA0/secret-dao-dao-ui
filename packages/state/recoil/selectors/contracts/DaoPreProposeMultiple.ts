@@ -13,7 +13,6 @@ import {
 } from '../../../contracts/DaoPreProposeMultiple'
 import { signingCosmWasmClientAtom } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -64,17 +63,6 @@ export const proposalModuleSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const proposalModule = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeMultiple/proposalModule',
-        })
-      )
-      if (proposalModule && typeof proposalModule === 'string') {
-        return proposalModule
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return extractAddressFromMaybeSecretContractInfo(
         await client.proposalModule(...params)
@@ -91,17 +79,6 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeMultiple/dao',
-        })
-      )
-      if (dao && typeof dao === 'string') {
-        return dao
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return extractAddressFromMaybeSecretContractInfo(
         await client.dao(...params)
@@ -118,16 +95,6 @@ export const configSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const config = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeMultiple/config',
-        })
-      )
-      if (config) {
-        return config
-      }
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.config(...params)
     },
@@ -142,17 +109,6 @@ export const depositInfoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const depositInfo = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoPreProposeMultiple/depositInfo',
-          args: params[0],
-        })
-      )
-      if (depositInfo) {
-        return depositInfo
-      }
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.depositInfo(...params)
     },

@@ -5,7 +5,6 @@ import {
   DaoCoreV2Selectors,
   genericTokenSelector,
   nftUriDataSelector,
-  queryWalletIndexerSelector,
   refreshWalletBalancesIdAtom,
   refreshWalletStargazeNftsAtom,
   stargazeIndexerClient,
@@ -325,7 +324,7 @@ export const walletLazyNftCardInfosSelector = selectorFamily<
   get:
     ({ walletAddress, chainId }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(walletAddress))
+      get(refreshWalletBalancesIdAtom(walletAddress))
       // Use Stargaze's API if we're on the Stargaze chain.
       if (
         chainId === ChainId.StargazeMainnet ||
@@ -340,46 +339,55 @@ export const walletLazyNftCardInfosSelector = selectorFamily<
         }
       }
 
-      const collections: CollectionWithTokens[] = get(
-        queryWalletIndexerSelector({
-          chainId,
-          walletAddress,
-          formula: 'nft/collections',
-          id,
-          noFallback: true,
-        })
-      )
-      if (!collections || !Array.isArray(collections)) {
-        return {
-          [chainId]: {
-            loading: false,
-            errored: false,
-            data: [],
-          },
-        }
-      }
-
-      // Get all lazy info for each collection.
-      const lazyNftCardInfos = collections.flatMap(
-        ({ collectionAddress, tokens }) =>
-          tokens.map(
-            (tokenId): LazyNftCardInfo => ({
-              key: getNftKey(chainId, collectionAddress, tokenId),
-              chainId,
-              tokenId,
-              collectionAddress,
-              type: 'collection',
-            })
-          )
-      )
-
+      // No indexer on Secret Network.
       return {
         [chainId]: {
           loading: false,
           errored: false,
-          data: lazyNftCardInfos,
+          data: [],
         },
       }
+
+      // const collections: CollectionWithTokens[] = get(
+      //   queryWalletIndexerSelector({
+      //     chainId,
+      //     walletAddress,
+      //     formula: 'nft/collections',
+      //     id,
+      //     noFallback: true,
+      //   })
+      // )
+      // if (!collections || !Array.isArray(collections)) {
+      //   return {
+      //     [chainId]: {
+      //       loading: false,
+      //       errored: false,
+      //       data: [],
+      //     },
+      //   }
+      // }
+
+      // // Get all lazy info for each collection.
+      // const lazyNftCardInfos = collections.flatMap(
+      //   ({ collectionAddress, tokens }) =>
+      //     tokens.map(
+      //       (tokenId): LazyNftCardInfo => ({
+      //         key: getNftKey(chainId, collectionAddress, tokenId),
+      //         chainId,
+      //         tokenId,
+      //         collectionAddress,
+      //         type: 'collection',
+      //       })
+      //     )
+      // )
+
+      // return {
+      //   [chainId]: {
+      //     loading: false,
+      //     errored: false,
+      //     data: lazyNftCardInfos,
+      //   },
+      // }
     },
 })
 
@@ -395,39 +403,42 @@ export const walletStakedLazyNftCardInfosSelector = selectorFamily<
   get:
     ({ walletAddress, chainId }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(walletAddress))
+      // No indexer on Secret Network.
+      return []
 
-      const collections: CollectionWithTokens[] = get(
-        queryWalletIndexerSelector({
-          chainId,
-          walletAddress,
-          formula: 'nft/stakedWithDaos',
-          id,
-          noFallback: true,
-        })
-      )
-      if (!collections || !Array.isArray(collections)) {
-        return []
-      }
+      // const id = get(refreshWalletBalancesIdAtom(walletAddress))
 
-      // Get all lazy info for each collection.
-      const lazyNftCardInfos = collections.flatMap(
-        ({ collectionAddress, tokens }) =>
-          tokens.map(
-            (tokenId): LazyNftCardInfo => ({
-              key: getNftKey(chainId, collectionAddress, tokenId),
-              chainId,
-              tokenId,
-              collectionAddress,
-              type: 'collection',
-            })
-          )
-      )
+      // const collections: CollectionWithTokens[] = get(
+      //   queryWalletIndexerSelector({
+      //     chainId,
+      //     walletAddress,
+      //     formula: 'nft/stakedWithDaos',
+      //     id,
+      //     noFallback: true,
+      //   })
+      // )
+      // if (!collections || !Array.isArray(collections)) {
+      //   return []
+      // }
 
-      return lazyNftCardInfos.map((info) => ({
-        ...info,
-        staked: true,
-      }))
+      // // Get all lazy info for each collection.
+      // const lazyNftCardInfos = collections.flatMap(
+      //   ({ collectionAddress, tokens }) =>
+      //     tokens.map(
+      //       (tokenId): LazyNftCardInfo => ({
+      //         key: getNftKey(chainId, collectionAddress, tokenId),
+      //         chainId,
+      //         tokenId,
+      //         collectionAddress,
+      //         type: 'collection',
+      //       })
+      //     )
+      // )
+
+      // return lazyNftCardInfos.map((info) => ({
+      //   ...info,
+      //   staked: true,
+      // }))
     },
 })
 

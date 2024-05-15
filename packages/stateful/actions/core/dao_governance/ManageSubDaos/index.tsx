@@ -26,6 +26,7 @@ const useDefaults: UseDefaults<ManageSubDaosData> = () => ({
   toAdd: [
     {
       addr: '',
+      code_hash: '',
     },
   ],
   toRemove: [],

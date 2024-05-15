@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { constSelector } from 'recoil'
 
 import {
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   genericTokenSelector,
 } from '@dao-dao/state/recoil'
 import { NumbersEmoji, useCachedLoadingWithError } from '@dao-dao/stateless'
@@ -123,7 +123,7 @@ export const makeEnableMultipleChoiceAction: ActionMaker<
     }
 
     const config = useCachedLoadingWithError(
-      DaoProposalSingleCommonSelectors.configSelector({
+      DaoProposalSingleV2Selectors.configSelector({
         contractAddress: singleChoiceProposal.address,
         chainId,
       })
@@ -144,12 +144,12 @@ export const makeEnableMultipleChoiceAction: ActionMaker<
         : genericTokenSelector({
             chainId,
             type:
-              'cw20' in depositInfo.data.denom
+              'snip20' in depositInfo.data.denom
                 ? TokenType.Cw20
                 : TokenType.Native,
             denomOrAddress:
-              'cw20' in depositInfo.data.denom
-                ? depositInfo.data.denom.cw20
+              'snip20' in depositInfo.data.denom
+                ? depositInfo.data.denom.snip20[0]
                 : depositInfo.data.denom.native,
           })
     )
@@ -210,12 +210,12 @@ export const makeEnableMultipleChoiceAction: ActionMaker<
                   )
                 : 10,
             type:
-              depositInfo.data && 'cw20' in depositInfo.data.denom
+              depositInfo.data && 'snip20' in depositInfo.data.denom
                 ? 'cw20'
                 : 'native',
             denomOrAddress: depositInfo.data
-              ? 'cw20' in depositInfo.data.denom
-                ? depositInfo.data.denom.cw20
+              ? 'snip20' in depositInfo.data.denom
+                ? depositInfo.data.denom.snip20[0]
                 : depositInfo.data.denom.native
               : getNativeTokenForChainId(chainId).denomOrAddress,
             token: depositInfoToken.data,

@@ -1,7 +1,7 @@
 import { Texture } from '@mui/icons-material'
 import { ComponentMeta, ComponentStory } from '@storybook/react'
 
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import { ProposalVoteButton } from './ProposalVoteButton'
 

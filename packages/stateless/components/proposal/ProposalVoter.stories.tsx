@@ -1,7 +1,7 @@
 import { Check, Close as CloseIcon, Texture } from '@mui/icons-material'
 import { ComponentMeta, ComponentStory } from '@storybook/react'
 
-import { Vote as VoteType } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote as VoteType } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import { ProposalVoter } from './ProposalVoter'
 

@@ -22,7 +22,6 @@ import {
 } from '../../atoms/refresh'
 import { cosmWasmClientForChainSelector } from '../chain'
 import { contractInfoSelector } from '../contract'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -72,17 +71,6 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/dao',
-        })
-      )
-      if (dao) {
-        return dao
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.dao(...params)
     },
@@ -97,17 +85,6 @@ export const getConfigSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const config = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/config',
-        })
-      )
-      if (config) {
-        return config
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.getConfig(...params)
     },
@@ -122,22 +99,8 @@ export const claimsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshClaimsIdAtom(params[0].address))
+      get(refreshClaimsIdAtom(params[0].address))
 
-      const claims = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/claims',
-          args: params[0],
-          id,
-        })
-      )
-      // Null when indexer fails. Undefined if no claims.
-      if (claims !== null) {
-        return { claims: claims || [] }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.claims(...params)
     },
@@ -152,18 +115,6 @@ export const listStakersSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const stakers = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/listStakers',
-          args: params[0],
-        })
-      )
-      if (stakers) {
-        return { stakers }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listStakers(...params)
     },
@@ -178,27 +129,8 @@ export const votingPowerAtHeightSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(params[0].address))
+      get(refreshWalletBalancesIdAtom(params[0].address))
 
-      const votingPower = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/votingPower',
-          args: {
-            address: params[0].address,
-          },
-          block: params[0].height ? { height: params[0].height } : undefined,
-          id,
-        })
-      )
-      if (votingPower && !isNaN(votingPower)) {
-        return {
-          power: votingPower,
-          height: params[0].height,
-        }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.votingPowerAtHeight(...params)
     },
@@ -213,26 +145,9 @@ export const totalPowerAtHeightSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshWalletBalancesIdAtom(undefined)) +
-        get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
+      get(refreshWalletBalancesIdAtom(undefined))
+      get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
 
-      const totalPower = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingNativeStaked/totalPower',
-          block: params[0].height ? { height: params[0].height } : undefined,
-          id,
-        })
-      )
-      if (totalPower && !isNaN(totalPower)) {
-        return {
-          power: totalPower,
-          height: params[0].height,
-        }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.totalPowerAtHeight(...params)
     },
@@ -254,19 +169,21 @@ export const topStakersSelector = selectorFamily<
   get:
     (queryClientParams) =>
     ({ get }) => {
-      const id =
-        get(refreshWalletBalancesIdAtom(undefined)) +
-        get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
+      // No indexer on Secret Network.
+      return undefined
 
-      return (
-        get(
-          queryContractIndexerSelector({
-            ...queryClientParams,
-            formula: 'daoVotingNativeStaked/topStakers',
-            id,
-            noFallback: true,
-          })
-        ) ?? undefined
-      )
+      // get(refreshWalletBalancesIdAtom(undefined))
+      // get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
+
+      // return (
+      //   get(
+      //     queryContractIndexerSelector({
+      //       ...queryClientParams,
+      //       formula: 'daoVotingNativeStaked/topStakers',
+      //       id,
+      //       noFallback: true,
+      //     })
+      //   ) ?? undefined
+      // )
     },
 })

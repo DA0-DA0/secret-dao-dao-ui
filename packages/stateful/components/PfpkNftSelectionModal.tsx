@@ -27,9 +27,7 @@ import {
   MAINNET,
   getDisplayNameForChainId,
   getNftKey,
-  getSupportedChainConfig,
   getSupportedChains,
-  isSecretNetwork,
   processError,
   uploadNft,
 } from '@dao-dao/utils'
@@ -170,34 +168,25 @@ export const InnerPfpkNftSelectionModal = ({
 
   const [uploadingImage, setUploadingImage] = useState(false)
 
-  // Upload profile photos to Juno mainnet when on a chain without the cw721
-  // code ID (like Stargaze) or on Secret Network since it doesn't support
-  // instantiate2. Otherwise, just use the currently connected chain. Stargaze
-  // uses sg721 instead of cw721 NFTs, and sg721 costs STARS to mint. We don't
-  // want to list user's profile photos on the Stargaze marketplace nor charge
-  // them for uploading a profile photo.
-  const uploadWallet = useWallet({
-    chainId:
-      !isSecretNetwork(chain.chain_id) &&
-      getSupportedChainConfig(chain.chain_id)?.codeIds?.Cw721Base
-        ? chain.chain_id
-        : ChainId.JunoMainnet,
+  // Upload profile photos to Juno mainnet since Secret Network doesn't support
+  // instantiate2.
+  const junoWallet = useWallet({
+    chainId: ChainId.JunoMainnet,
     // Attempt connection to upload wallet chain when image selector is visible.
     attemptConnection: showImageSelector,
   })
   const { ready: instantiateAndExecuteReady, instantiateAndExecute } =
     useInstantiateAndExecute(
-      uploadWallet.chain.chain_id,
-      // Should be defined since we chose a chain ID above with this set.
-      getSupportedChainConfig(uploadWallet.chain.chain_id)?.codeIds.Cw721Base ||
-        -1
+      junoWallet.chain.chain_id,
+      // cw721-base code ID
+      1994
     )
 
   const uploadImage = useCallback(async () => {
     setUploadingImage(true)
     try {
-      if (!uploadWallet.isWalletConnected) {
-        await uploadWallet.connect()
+      if (!junoWallet.isWalletConnected) {
+        await junoWallet.connect()
         return
       }
 
@@ -224,11 +213,11 @@ export const InnerPfpkNftSelectionModal = ({
       // Instantiate and execute cw721 mint.
       const { contractAddress } = await instantiateAndExecute({
         instantiate: {
-          admin: uploadWallet.address,
+          admin: junoWallet.address,
           funds: [],
           label: 'DAO DAO Profile Picture',
           msg: {
-            minter: uploadWallet.address,
+            minter: junoWallet.address,
             name: 'DAO DAO Profile Picture',
             symbol: 'PIC',
           } as InstantiateMsg,
@@ -238,7 +227,7 @@ export const InnerPfpkNftSelectionModal = ({
             funds: [],
             msg: {
               mint: {
-                owner: uploadWallet.address,
+                owner: junoWallet.address,
                 token_id: cid,
                 token_uri: metadataUrl,
               } as MintMsgForNullable_Empty,
@@ -269,7 +258,7 @@ export const InnerPfpkNftSelectionModal = ({
     instantiateAndExecuteReady,
     refreshBalances,
     t,
-    uploadWallet,
+    junoWallet,
   ])
 
   const nftCardInfosForKey = useRecoilValue(nftCardInfosForKeyAtom)
@@ -376,11 +365,11 @@ export const InnerPfpkNftSelectionModal = ({
         <ImageSelectorModal
           Trans={Trans}
           buttonLabel={
-            uploadWallet.isWalletConnected
+            junoWallet.isWalletConnected
               ? t('button.save')
               : t('button.connectToChain', {
                   chainName: getDisplayNameForChainId(
-                    uploadWallet.chain.chain_id
+                    junoWallet.chain.chain_id
                   ),
                 })
           }

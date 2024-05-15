@@ -20,7 +20,6 @@ import {
   signingCosmWasmClientAtom,
 } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -149,17 +148,19 @@ export const stakerForNftSelector = selectorFamily<
   get:
     ({ contractAddress, tokenId, chainId }) =>
     ({ get }) =>
-      get(
-        queryContractIndexerSelector({
-          chainId,
-          contractAddress,
-          formula: 'daoVotingCw721Staked/staker',
-          args: {
-            tokenId,
-          },
-          noFallback: true,
-        })
-      ),
+      // No indexer on Secret Network.
+      undefined,
+  // get(
+  //   queryContractIndexerSelector({
+  //     chainId,
+  //     contractAddress,
+  //     formula: 'daoVotingCw721Staked/staker',
+  //     args: {
+  //       tokenId,
+  //     },
+  //     noFallback: true,
+  //   })
+  // ),
 })
 
 ///! Custom selectors
@@ -177,22 +178,25 @@ export const topStakersSelector = selectorFamily<
   get:
     ({ limit, ...queryClientParams }) =>
     ({ get }) => {
-      const id =
-        get(refreshWalletBalancesIdAtom(undefined)) +
-        get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
+      // No indexer on Secret Network.
+      return undefined
 
-      return (
-        get(
-          queryContractIndexerSelector({
-            ...queryClientParams,
-            formula: 'daoVotingCw721Staked/topStakers',
-            args: {
-              limit,
-            },
-            id,
-            noFallback: true,
-          })
-        ) ?? undefined
-      )
+      // const id =
+      //   get(refreshWalletBalancesIdAtom(undefined)) +
+      //   get(refreshDaoVotingPowerAtom(queryClientParams.contractAddress))
+
+      // return (
+      //   get(
+      //     queryContractIndexerSelector({
+      //       ...queryClientParams,
+      //       formula: 'daoVotingCw721Staked/topStakers',
+      //       args: {
+      //         limit,
+      //       },
+      //       id,
+      //       noFallback: true,
+      //     })
+      //   ) ?? undefined
+      // )
     },
 })

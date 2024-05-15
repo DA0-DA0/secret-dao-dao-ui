@@ -42,7 +42,6 @@ import {
 } from '@dao-dao/types/protobuf'
 import { ModuleAccount } from '@dao-dao/types/protobuf/codegen/cosmos/auth/v1beta1/auth'
 import { Metadata } from '@dao-dao/types/protobuf/codegen/cosmos/bank/v1beta1/bank'
-import { DecCoin } from '@dao-dao/types/protobuf/codegen/cosmos/base/v1beta1/coin'
 import {
   ProposalStatus,
   TallyResult,
@@ -83,11 +82,7 @@ import {
   refreshOpenProposalsAtom,
   refreshWalletBalancesIdAtom,
 } from '../atoms/refresh'
-import {
-  queryGenericIndexerSelector,
-  queryValidatorIndexerSelector,
-  searchGovProposalsSelector,
-} from './indexer'
+import { searchGovProposalsSelector } from './indexer'
 import { genericTokenSelector } from './token'
 import { walletTokenDaoStakedDenomsSelector } from './wallet'
 
@@ -947,49 +942,11 @@ export const govProposalSelector = selectorFamily<
   get:
     ({ proposalId, chainId }) =>
     async ({ get }) => {
-      const id = get(refreshGovProposalsAtom(chainId))
+      get(refreshGovProposalsAtom(chainId))
 
       const supportsV1Gov = get(chainSupportsV1GovModuleSelector({ chainId }))
 
-      // Try to load from indexer first.
-      const indexerProposal:
-        | {
-            id: string
-            version: string
-            data: string
-          }
-        | undefined = get(
-        queryGenericIndexerSelector({
-          chainId,
-          formula: 'gov/proposal',
-          args: {
-            id: proposalId,
-          },
-          id,
-        })
-      )
-
       let govProposal: GovProposalWithDecodedContent | undefined
-
-      if (indexerProposal) {
-        if (supportsV1Gov) {
-          govProposal = await decodeGovProposal({
-            version: GovProposalVersion.V1,
-            id: BigInt(proposalId),
-            proposal: ProposalV1.decode(fromBase64(indexerProposal.data)),
-          })
-        } else {
-          govProposal = await decodeGovProposal({
-            version: GovProposalVersion.V1_BETA_1,
-            id: BigInt(proposalId),
-            proposal: ProposalV1Beta1.decode(
-              fromBase64(indexerProposal.data),
-              undefined,
-              true
-            ),
-          })
-        }
-      }
 
       // Fallback to querying chain if indexer failed.
       if (!govProposal) {
@@ -1360,27 +1317,8 @@ export const communityPoolBalancesSelector = selectorFamily<
   get:
     ({ chainId }) =>
     async ({ get }) => {
-      let pool: DecCoin[]
-
-      const poolMap: Record<string, string> | undefined = get(
-        queryGenericIndexerSelector({
-          chainId,
-          formula: 'communityPool/balances',
-        })
-      )
-      if (poolMap) {
-        pool = Object.entries(poolMap).map(
-          ([denom, amount]): DecCoin => ({
-            denom,
-            amount,
-          })
-        )
-
-        // Fallback to querying chain if indexer failed.
-      } else {
-        const client = get(cosmosRpcClientForChainSelector(chainId))
-        pool = (await client.distribution.v1beta1.communityPool()).pool
-      }
+      const client = get(cosmosRpcClientForChainSelector(chainId))
+      const pool = (await client.distribution.v1beta1.communityPool()).pool
 
       const tokens = get(
         waitForAll(
@@ -1626,14 +1564,16 @@ export const validatorSlashesSelector = selectorFamily<
   get:
     ({ validatorOperatorAddress, chainId }) =>
     async ({ get }) =>
-      (await get(
-        queryValidatorIndexerSelector({
-          validatorOperatorAddress,
-          chainId,
-          formula: 'staking/slashes',
-          noFallback: true,
-        })
-      )) ?? [],
+      // No indexer on Secret Network.
+      [],
+  // (await get(
+  //   queryValidatorIndexerSelector({
+  //     validatorOperatorAddress,
+  //     chainId,
+  //     formula: 'staking/slashes',
+  //     noFallback: true,
+  //   })
+  // )) ?? [],
 })
 
 export const denomMetadataSelector = selectorFamily<

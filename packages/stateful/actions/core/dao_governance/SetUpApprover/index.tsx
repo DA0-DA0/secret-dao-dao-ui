@@ -1,10 +1,11 @@
 import { useCallback, useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 
+import { waitForAll } from 'recoil'
 import {
   DaoCoreV2Selectors,
   DaoPreProposeApprovalSingleSelectors,
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
 } from '@dao-dao/state/recoil'
 import {
   PersonRaisingHandEmoji,
@@ -199,10 +200,17 @@ export const makeSetUpApproverAction: ActionMaker<SetUpApproverData> = ({
     }
 
     const configLoading = useCachedLoadingWithError(
-      DaoProposalSingleCommonSelectors.configSelector({
-        contractAddress: singleChoiceProposal.address,
-        chainId,
-      })
+      waitForAll([
+        DaoProposalSingleV2Selectors.configSelector({
+          contractAddress: singleChoiceProposal.address,
+          chainId,
+        }),
+        DaoProposalSingleV2Selectors.daoSelector({
+          contractAddress: singleChoiceProposal.address,
+          chainId,
+          params: [],
+        }),
+      ])
     )
 
     return useCallback(
@@ -213,11 +221,12 @@ export const makeSetUpApproverAction: ActionMaker<SetUpApproverData> = ({
         if (configLoading.errored) {
           throw configLoading.error
         }
-        const config = configLoading.data
+        const [config, dao] = configLoading.data
 
         const info: ModuleInstantiateInfo = {
           admin: { core_module: {} },
-          code_id: chainContext.config.codeIds.DaoProposalSingle,
+          code_id: chainContext.config.codeIds.DaoProposalSingle.codeId,
+          code_hash: chainContext.config.codeIds.DaoProposalSingle.codeHash,
           label: `DAO_${context.info.name.trim()}_${DaoProposalSingleAdapterId}_approver`,
           msg: encodeJsonToBase64({
             threshold: config.threshold,
@@ -233,11 +242,16 @@ export const makeSetUpApproverAction: ActionMaker<SetUpApproverData> = ({
             max_voting_period: config.max_voting_period,
             only_members_execute: config.only_members_execute,
             veto: 'veto' in config ? config.veto : undefined,
+            query_auth: config.query_auth,
+            dao_code_hash: dao.code_hash,
             pre_propose_info: {
               module_may_propose: {
                 info: {
                   admin: { core_module: {} },
-                  code_id: chainContext.config.codeIds.DaoPreProposeApprover,
+                  code_id:
+                    chainContext.config.codeIds.DaoPreProposeApprover.codeId,
+                  code_hash:
+                    chainContext.config.codeIds.DaoPreProposeApprover.codeHash,
                   label: `DAO_${context.info.name.trim()}_pre-propose${DaoProposalSingleAdapterId}_approver`,
                   msg: encodeJsonToBase64({
                     pre_propose_approval_contract: preProposeApprovalContract,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { DaoProposalSingleCommonSelectors } from '@dao-dao/state'
+import { DaoProposalSingleV2Selectors } from '@dao-dao/state'
 import {
   PaginatedProposalVotes,
   ProposalVote,
@@ -32,7 +32,7 @@ export const ProposalVotes = () => {
     // calculation in the transformation function works correctly.
     loadingProposal.loading
       ? undefined
-      : DaoProposalSingleCommonSelectors.listAllVotesSelector({
+      : DaoProposalSingleV2Selectors.listAllVotesSelector({
           chainId,
           contractAddress: proposalModuleAddress,
           proposalId: proposalNumber,
@@ -40,13 +40,12 @@ export const ProposalVotes = () => {
     (data) =>
       data
         .map(
-          ({ vote, voter, power, rationale, votedAt }): ProposalVote => ({
+          ({ vote, voter, power, rationale }): ProposalVote => ({
             voterAddress: voter,
             vote,
             votingPowerPercent:
               totalPower === 0 ? 0 : (Number(power) / totalPower) * 100,
             rationale,
-            votedAt: votedAt ? new Date(votedAt) : undefined,
           })
         )
         // Sort most recent first.

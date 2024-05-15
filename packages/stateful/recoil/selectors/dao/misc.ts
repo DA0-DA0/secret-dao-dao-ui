@@ -1,4 +1,3 @@
-import uniq from 'lodash.uniq'
 import { selectorFamily, waitForAll, waitForAllSettled } from 'recoil'
 
 import {
@@ -11,36 +10,29 @@ import {
   contractVersionSelector,
   isDaoSelector,
   moduleAddressSelector,
-  queryContractIndexerSelector,
-  queryWalletIndexerSelector,
-  refreshProposalsIdAtom,
   reverseLookupPolytoneProxySelector,
 } from '@dao-dao/state'
 import {
   ChainId,
   ContractVersion,
-  ContractVersionInfo,
   DaoInfo,
   DaoPageMode,
   DaoParentInfo,
   DaoWithDropdownVetoableProposalList,
   DaoWithVetoableProposals,
   Feature,
-  IndexerDaoWithVetoableProposals,
   ProposalModule,
   StatefulProposalLineProps,
   SupportedFeatureMap,
   WithChainId,
 } from '@dao-dao/types'
 import { ConfigResponse as CwCoreV1ConfigResponse } from '@dao-dao/types/contracts/CwCore.v1'
-import { ConfigResponse as DaoCoreV2ConfigResponse } from '@dao-dao/types/contracts/DaoCore.v2'
+import { Config as DaoCoreV2ConfigResponse } from '@dao-dao/types/contracts/DaoCore.v2'
 import {
   CHAIN_SUBDAOS,
-  DAO_CORE_CONTRACT_NAMES,
   DaoVotingCw20StakedAdapterId,
   NEUTRON_GOVERNANCE_DAO,
   VETOABLE_DAOS_ITEM_KEY_PREFIX,
-  extractAddressFromMaybeSecretContractInfo,
   getChainGovernanceDaoDescription,
   getConfiguredChainConfig,
   getDaoProposalPath,
@@ -141,27 +133,30 @@ export const daoPotentialSubDaosSelector = selectorFamily<
   get:
     ({ coreAddress, chainId }) =>
     ({ get }) => {
-      const potentialSubDaos: {
-        contractAddress: string
-        info: ContractVersionInfo
-      }[] = get(
-        queryContractIndexerSelector({
-          chainId,
-          contractAddress: coreAddress,
-          formula: 'daoCore/potentialSubDaos',
-          noFallback: true,
-        })
-      )
+      // No indexer on Secret Network.
+      return []
 
-      // Filter out those that do not appear to be DAO contracts and also the
-      // contract itself since it is probably its own admin.
-      return potentialSubDaos
-        .filter(
-          ({ contractAddress, info }) =>
-            contractAddress !== coreAddress &&
-            DAO_CORE_CONTRACT_NAMES.some((name) => info.contract.includes(name))
-        )
-        .map(({ contractAddress }) => contractAddress)
+      // const potentialSubDaos: {
+      //   contractAddress: string
+      //   info: ContractVersionInfo
+      // }[] = get(
+      //   queryContractIndexerSelector({
+      //     chainId,
+      //     contractAddress: coreAddress,
+      //     formula: 'daoCore/potentialSubDaos',
+      //     noFallback: true,
+      //   })
+      // )
+
+      // // Filter out those that do not appear to be DAO contracts and also the
+      // // contract itself since it is probably its own admin.
+      // return potentialSubDaos
+      //   .filter(
+      //     ({ contractAddress, info }) =>
+      //       contractAddress !== coreAddress &&
+      //       DAO_CORE_CONTRACT_NAMES.some((name) => info.contract.includes(name))
+      //   )
+      //   .map(({ contractAddress }) => contractAddress)
     },
 })
 
@@ -237,9 +232,7 @@ export const daoInfoSelector = selectorFamily<
         throw new Error('DAO failed to dump state.')
       }
 
-      const votingModuleAddress = extractAddressFromMaybeSecretContractInfo(
-        dumpState.voting_module
-      )
+      const votingModuleAddress = dumpState.voting_module_address
 
       const [
         // Non-loadables
@@ -556,106 +549,109 @@ export const daosWithVetoableProposalsSelector = selectorFamily<
   get:
     ({ chainId, coreAddress, includeAll = false }) =>
     ({ get }) => {
-      // Refresh this when all proposals refresh.
-      const id = get(refreshProposalsIdAtom)
+      // No indexer on Secret Network.
+      return []
 
-      const accounts = get(
-        accountsSelector({
-          chainId,
-          address: coreAddress,
-        })
-      )
+      // // Refresh this when all proposals refresh.
+      // const id = get(refreshProposalsIdAtom)
 
-      // Load DAOs this DAO has enabled vetoable proposal listing for.
-      const vetoableDaos =
-        !includeAll &&
-        get(
-          isDaoSelector({
-            chainId,
-            address: coreAddress,
-          })
-        )
-          ? get(
-              waitForAllSettled([
-                daoVetoableDaosSelector({
-                  chainId,
-                  coreAddress,
-                }),
-              ])
-            )[0].valueMaybe() || []
-          : []
+      // const accounts = get(
+      //   accountsSelector({
+      //     chainId,
+      //     address: coreAddress,
+      //   })
+      // )
 
-      const daoVetoableProposalsPerChain = (
-        get(
-          waitForAll(
-            accounts.map(({ chainId, address }) =>
-              queryWalletIndexerSelector({
-                chainId,
-                walletAddress: address,
-                formula: 'veto/vetoableProposals',
-                id,
-                noFallback: true,
-              })
-            )
-          )
-        ) as (IndexerDaoWithVetoableProposals[] | undefined)[]
-      )
-        .flatMap((data, index) =>
-          (data || []).map((d) => ({
-            chainId: accounts[index].chainId,
-            ...d,
-          }))
-        )
-        .filter(
-          ({ chainId, dao }) =>
-            includeAll ||
-            vetoableDaos.some(
-              (vetoable) =>
-                vetoable.chainId === chainId && vetoable.coreAddress === dao
-            )
-        )
+      // // Load DAOs this DAO has enabled vetoable proposal listing for.
+      // const vetoableDaos =
+      //   !includeAll &&
+      //   get(
+      //     isDaoSelector({
+      //       chainId,
+      //       address: coreAddress,
+      //     })
+      //   )
+      //     ? get(
+      //         waitForAllSettled([
+      //           daoVetoableDaosSelector({
+      //             chainId,
+      //             coreAddress,
+      //           }),
+      //         ])
+      //       )[0].valueMaybe() || []
+      //     : []
 
-      const uniqueChainsAndDaos = uniq(
-        daoVetoableProposalsPerChain.map(
-          ({ chainId, dao }) => `${chainId}:${dao}`
-        )
-      )
+      // const daoVetoableProposalsPerChain = (
+      //   get(
+      //     waitForAll(
+      //       accounts.map(({ chainId, address }) =>
+      //         queryWalletIndexerSelector({
+      //           chainId,
+      //           walletAddress: address,
+      //           formula: 'veto/vetoableProposals',
+      //           id,
+      //           noFallback: true,
+      //         })
+      //       )
+      //     )
+      //   ) as (IndexerDaoWithVetoableProposals[] | undefined)[]
+      // )
+      //   .flatMap((data, index) =>
+      //     (data || []).map((d) => ({
+      //       chainId: accounts[index].chainId,
+      //       ...d,
+      //     }))
+      //   )
+      //   .filter(
+      //     ({ chainId, dao }) =>
+      //       includeAll ||
+      //       vetoableDaos.some(
+      //         (vetoable) =>
+      //           vetoable.chainId === chainId && vetoable.coreAddress === dao
+      //       )
+      //   )
 
-      const daoConfigAndProposalModules = get(
-        waitForAllSettled(
-          uniqueChainsAndDaos.map((chainAndDao) => {
-            const [chainId, coreAddress] = chainAndDao.split(':')
-            return waitForAll([
-              DaoCoreV2Selectors.configSelector({
-                chainId,
-                contractAddress: coreAddress,
-                params: [],
-              }),
-              daoCoreProposalModulesSelector({
-                chainId,
-                coreAddress,
-              }),
-            ])
-          })
-        )
-      )
+      // const uniqueChainsAndDaos = uniq(
+      //   daoVetoableProposalsPerChain.map(
+      //     ({ chainId, dao }) => `${chainId}:${dao}`
+      //   )
+      // )
 
-      return uniqueChainsAndDaos.flatMap((chainAndDao, index) => {
-        const daoData = daoConfigAndProposalModules[index]
+      // const daoConfigAndProposalModules = get(
+      //   waitForAllSettled(
+      //     uniqueChainsAndDaos.map((chainAndDao) => {
+      //       const [chainId, coreAddress] = chainAndDao.split(':')
+      //       return waitForAll([
+      //         DaoCoreV2Selectors.configSelector({
+      //           chainId,
+      //           contractAddress: coreAddress,
+      //           params: [],
+      //         }),
+      //         daoCoreProposalModulesSelector({
+      //           chainId,
+      //           coreAddress,
+      //         }),
+      //       ])
+      //     })
+      //   )
+      // )
 
-        return daoData.state === 'hasValue'
-          ? {
-              chainId: chainAndDao.split(':')[0],
-              dao: chainAndDao.split(':')[1],
-              name: daoData.contents[0].name,
-              proposalModules: daoData.contents[1],
-              proposalsWithModule: daoVetoableProposalsPerChain.find(
-                (vetoable) =>
-                  `${vetoable.chainId}:${vetoable.dao}` === chainAndDao
-              )!.proposalsWithModule,
-            }
-          : []
-      })
+      // return uniqueChainsAndDaos.flatMap((chainAndDao, index) => {
+      //   const daoData = daoConfigAndProposalModules[index]
+
+      //   return daoData.state === 'hasValue'
+      //     ? {
+      //         chainId: chainAndDao.split(':')[0],
+      //         dao: chainAndDao.split(':')[1],
+      //         name: daoData.contents[0].name,
+      //         proposalModules: daoData.contents[1],
+      //         proposalsWithModule: daoVetoableProposalsPerChain.find(
+      //           (vetoable) =>
+      //             `${vetoable.chainId}:${vetoable.dao}` === chainAndDao
+      //         )!.proposalsWithModule,
+      //       }
+      //     : []
+      // })
     },
 })
 

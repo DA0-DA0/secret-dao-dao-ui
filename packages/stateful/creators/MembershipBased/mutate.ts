@@ -20,14 +20,16 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
     }))
   )
 
-  const newData = {
-    cw4_group_code_id: codeIds.Cw4Group,
-    initial_members: initialMembers,
-  }
-
   const votingModuleAdapterInstantiateMsg: InstantiateMsg = {
+    dao_code_hash: codeIds.DaoCore.codeHash,
+    // TODO(secret): make dao-voting-cw4 query_auth set in contract on init
+    query_auth: {},
     group_contract: {
-      new: newData,
+      new: {
+        cw4_group_code_id: codeIds.Cw4Group.codeId,
+        cw4_group_code_hash: codeIds.Cw4Group.codeHash,
+        initial_members: initialMembers,
+      },
     },
   }
 
@@ -39,7 +41,8 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
 
   msg.voting_module_instantiate_info = {
     admin: { core_module: {} },
-    code_id: codeIds.DaoVotingCw4,
+    code_id: codeIds.DaoVotingCw4.codeId,
+    code_hash: codeIds.DaoVotingCw4.codeHash,
     label: `DAO_${name.trim()}_${MembershipBasedCreatorId}`,
     msg: encodeJsonToBase64(votingModuleAdapterInstantiateMsg),
     funds: [],

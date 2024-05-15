@@ -38,7 +38,8 @@ export const mutate: DaoCreatorMutate<CreatorData> = (
 
   msg.voting_module_instantiate_info = {
     admin: { core_module: {} },
-    code_id: codeIds.DaoVotingCw721Staked,
+    code_id: codeIds.DaoVotingSnip721Staked.codeId,
+    code_hash: codeIds.DaoVotingSnip721Staked.codeHash,
     label: `DAO_${daoName.trim()}_${NftBasedCreatorId}`,
     msg: encodeJsonToBase64(votingModuleAdapterInstantiateMsg),
     funds: [],

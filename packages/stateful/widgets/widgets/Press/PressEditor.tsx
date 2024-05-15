@@ -85,7 +85,8 @@ export const PressEditor = ({
 
     setInstantiating(true)
     try {
-      const codeId = getSupportedChainConfig(chainId)?.codeIds?.Cw721Base
+      const codeId =
+        getSupportedChainConfig(chainId)?.codeIds?.Snip721Base.codeId
 
       const name = `${daoName}'s Press`
       const contractAddress = codeId

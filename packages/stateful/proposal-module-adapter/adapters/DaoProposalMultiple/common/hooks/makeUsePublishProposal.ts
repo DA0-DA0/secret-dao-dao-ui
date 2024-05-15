@@ -73,8 +73,8 @@ export const makeUsePublishProposal =
     const depositInfoCw20TokenAddress =
       depositInfo.state === 'hasValue' &&
       depositInfo.contents?.denom &&
-      'cw20' in depositInfo.contents.denom
-        ? depositInfo.contents.denom.cw20
+      'snip20' in depositInfo.contents.denom
+        ? depositInfo.contents.denom.snip20[0]
         : undefined
     const depositInfoNativeTokenDenom =
       depositInfo.state === 'hasValue' &&

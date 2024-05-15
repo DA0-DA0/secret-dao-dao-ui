@@ -14,7 +14,7 @@ import {
 } from '../../../contracts/CwVesting'
 import { refreshVestingAtom, signingCosmWasmClientAtom } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { QueryIndexerParams, queryContractIndexerSelector } from '../indexer'
+import { QueryIndexerParams } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -61,21 +61,9 @@ export const infoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const anyId = get(refreshVestingAtom(''))
-      const thisId = get(refreshVestingAtom(queryClientParams.contractAddress))
+      get(refreshVestingAtom(''))
+      get(refreshVestingAtom(queryClientParams.contractAddress))
 
-      const info = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwVesting/info',
-          id: anyId + thisId,
-        })
-      )
-      if (info) {
-        return info
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.info(...params)
     },
@@ -183,19 +171,22 @@ export const stakeHistorySelector = selectorFamily<
   key: 'cwVestingValidatorStakeHistory',
   get:
     ({ contractAddress, chainId }) =>
+    // eslint-disable-next-line react/display-name
     ({ get }) => {
-      const anyId = get(refreshVestingAtom(''))
-      const thisId = get(refreshVestingAtom(contractAddress))
+      // No indexer on Secret Network.
+      return null
 
-      return get(
-        queryContractIndexerSelector({
-          contractAddress,
-          formula: 'cwVesting/stakeHistory',
-          chainId,
-          id: anyId + thisId,
-          noFallback: true,
-        })
-      )
+      // const anyId = get(refreshVestingAtom(''))
+      // const thisId = get(refreshVestingAtom(contractAddress))
+      // return get(
+      //   queryContractIndexerSelector({
+      //     contractAddress,
+      //     formula: 'cwVesting/stakeHistory',
+      //     chainId,
+      //     id: anyId + thisId,
+      //     noFallback: true,
+      //   })
+      // )
     },
 })
 
@@ -207,13 +198,16 @@ export const unbondingDurationSecondsSelector = selectorFamily<
   key: 'cwVestingValidatorUnbondingDurationSeconds',
   get:
     ({ contractAddress, chainId }) =>
+    // eslint-disable-next-line react/display-name
     ({ get }) =>
-      get(
-        queryContractIndexerSelector({
-          contractAddress,
-          formula: 'cwVesting/unbondingDurationSeconds',
-          chainId,
-          noFallback: true,
-        })
-      ),
+      // No indexer on Secret Network.
+      null,
+  // get(
+  //   queryContractIndexerSelector({
+  //     contractAddress,
+  //     formula: 'cwVesting/unbondingDurationSeconds',
+  //     chainId,
+  //     noFallback: true,
+  //   })
+  // ),
 })

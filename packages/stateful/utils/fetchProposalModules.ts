@@ -1,8 +1,4 @@
-import {
-  CwCoreV1QueryClient,
-  DaoCoreV2QueryClient,
-} from '@dao-dao/state/contracts'
-import { queryIndexer } from '@dao-dao/state/indexer'
+import { DaoCoreV2QueryClient } from '@dao-dao/state/contracts'
 import {
   ChainId,
   ContractVersion,
@@ -31,21 +27,6 @@ export const fetchProposalModules = async (
   // If already fetched (from indexer), use that.
   activeProposalModules?: ProposalModuleWithInfo[]
 ): Promise<ProposalModule[]> => {
-  // Try indexer first.
-  if (!activeProposalModules) {
-    try {
-      activeProposalModules = await queryIndexer({
-        type: 'contract',
-        address: coreAddress,
-        formula: 'daoCore/activeProposalModules',
-        chainId,
-      })
-    } catch (err) {
-      // Ignore error.
-      console.error(err)
-    }
-  }
-  // If indexer fails, fallback to querying chain.
   if (!activeProposalModules) {
     activeProposalModules = await fetchProposalModulesWithInfoFromChain(
       chainId,
@@ -117,39 +98,13 @@ const LIMIT = 10
 export const fetchProposalModulesWithInfoFromChain = async (
   chainId: string,
   coreAddress: string,
-  coreVersion: ContractVersion
+  _coreVersion: ContractVersion
 ): Promise<ProposalModuleWithInfo[]> => {
   const cwClient = await getCosmWasmClientForChainId(chainId)
 
   let paginationStart: string | undefined
 
   const proposalModules: ProposalModuleWithInfo[] = []
-  const getV1ProposalModules = async () =>
-    (
-      await new CwCoreV1QueryClient(cwClient, coreAddress).proposalModules({
-        startAt: paginationStart,
-        limit: LIMIT,
-        // Ignore first address if startAt was set.
-      })
-    )
-      .slice(paginationStart !== undefined ? 1 : 0)
-      .map(async (address, index) => {
-        // All InfoResponses are the same, so just use core's.
-        const { info }: InfoResponse = await cwClient.queryContractSmart(
-          address,
-          {
-            info: {},
-          }
-        )
-
-        return {
-          address,
-          prefix: indexToProposalModulePrefix(index),
-          // V1 are all enabled.
-          status: 'Enabled' as const,
-          info,
-        }
-      })
 
   const getV2ProposalModules = async () =>
     (
@@ -176,11 +131,7 @@ export const fetchProposalModulesWithInfoFromChain = async (
     })
 
   while (true) {
-    const _proposalModules = await Promise.all(
-      coreVersion === ContractVersion.V1
-        ? await getV1ProposalModules()
-        : await getV2ProposalModules()
-    )
+    const _proposalModules = await Promise.all(await getV2ProposalModules())
     if (!_proposalModules.length) {
       break
     }

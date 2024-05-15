@@ -1,6 +1,5 @@
-import { DaoProposalMultipleQueryClient, queryIndexer } from '@dao-dao/state'
+import { DaoProposalMultipleQueryClient } from '@dao-dao/state'
 import { Feature, FetchVetoConfig } from '@dao-dao/types'
-import { Config } from '@dao-dao/types/contracts/DaoProposalMultiple'
 import {
   getCosmWasmClientForChainId,
   isFeatureSupportedByVersion,
@@ -15,29 +14,11 @@ export const fetchVetoConfig: FetchVetoConfig = async (
     return null
   }
 
-  // Try indexer first.
-  let config: Config | undefined
-  try {
-    config = await queryIndexer({
-      type: 'contract',
-      address: proposalModuleAddress,
-      formula: 'daoProposalMultiple/config',
-      chainId,
-    })
-  } catch (err) {
-    // Ignore error.
-    console.error(err)
-  }
+  const client = new DaoProposalMultipleQueryClient(
+    await getCosmWasmClientForChainId(chainId),
+    proposalModuleAddress
+  )
 
-  // If indexer fails, fallback to querying chain.
-  if (!config) {
-    const client = new DaoProposalMultipleQueryClient(
-      await getCosmWasmClientForChainId(chainId),
-      proposalModuleAddress
-    )
-
-    config = await client.config()
-  }
-
-  return config?.veto ?? null
+  const config = await client.config()
+  return config.veto ?? null
 }

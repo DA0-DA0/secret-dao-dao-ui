@@ -3,11 +3,9 @@ import { selectorFamily, waitForAll, waitForAllSettled } from 'recoil'
 import {
   Cw20BaseSelectors,
   Cw20StakeSelectors,
-  DaoCoreV2Selectors,
   DaoVotingNativeStakedSelectors,
   nativeDelegationInfoSelector,
   nativeUnstakingDurationSecondsSelector,
-  queryGenericIndexerSelector,
   usdPriceSelector,
 } from '@dao-dao/state'
 import {
@@ -196,33 +194,36 @@ export const daosWithNativeVotingContractSelector = selectorFamily<
   get:
     ({ denom, chainId }) =>
     ({ get }) => {
-      const daos: string[] =
-        get(
-          queryGenericIndexerSelector({
-            chainId,
-            formula: 'token/daos',
-            args: {
-              denom,
-            },
-            noFallback: true,
-          })
-        ) ?? []
-      const votingModuleAddresses = get(
-        waitForAll(
-          daos.map((contractAddress) =>
-            DaoCoreV2Selectors.votingModuleSelector({
-              contractAddress,
-              chainId,
-              params: [],
-            })
-          )
-        )
-      )
+      // No indexer on Secret Network.
+      return []
 
-      return daos.map((coreAddress, index) => ({
-        coreAddress,
-        votingModuleAddress: votingModuleAddresses[index],
-      }))
+      // const daos: string[] =
+      //   get(
+      //     queryGenericIndexerSelector({
+      //       chainId,
+      //       formula: 'token/daos',
+      //       args: {
+      //         denom,
+      //       },
+      //       noFallback: true,
+      //     })
+      //   ) ?? []
+      // const votingModuleAddresses = get(
+      //   waitForAll(
+      //     daos.map((contractAddress) =>
+      //       DaoCoreV2Selectors.votingModuleSelector({
+      //         contractAddress,
+      //         chainId,
+      //         params: [],
+      //       })
+      //     )
+      //   )
+      // )
+
+      // return daos.map((coreAddress, index) => ({
+      //   coreAddress,
+      //   votingModuleAddress: votingModuleAddresses[index],
+      // }))
     },
 })
 

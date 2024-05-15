@@ -45,7 +45,7 @@ export const InstantiateNftCollection: ActionComponent = (props) => {
       return
     }
     const minter = getChainAddressForActionOptions(options, chainId)
-    if (!codeIds.Cw721Base || !minter) {
+    if (!minter) {
       toast.error(t('error.invalidChain'))
       return
     }
@@ -55,7 +55,7 @@ export const InstantiateNftCollection: ActionComponent = (props) => {
       const contractAddress = await instantiateSmartContract(
         getSigningClient,
         walletAddress,
-        codeIds.Cw721Base,
+        codeIds.Snip721Base.codeId,
         instantiateData.name,
         {
           minter,

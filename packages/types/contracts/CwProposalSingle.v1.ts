@@ -7,7 +7,7 @@ import {
   ProposalStatus,
   Uint128,
 } from './common'
-import { Threshold, Votes } from './DaoProposalSingle.common'
+import { Threshold, Votes } from './DaoProposalSingle.v2'
 
 export interface ConfigResponse {
   allow_revoting: boolean

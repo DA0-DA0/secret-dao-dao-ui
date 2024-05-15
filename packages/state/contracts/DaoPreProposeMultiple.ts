@@ -12,10 +12,9 @@ import {
   ProposalStatusEnum,
 } from '@dao-dao/types/contracts/common'
 import {
+  AnyContractInfo,
   Config,
-  DaoResponse,
   DepositInfoResponse,
-  ProposalModuleResponse,
   ProposeMessage,
   UncheckedDenom,
   UncheckedDepositInfo,
@@ -24,8 +23,8 @@ import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoPreProposeMultipleReadOnlyInterface {
   contractAddress: string
-  proposalModule: () => Promise<ProposalModuleResponse>
-  dao: () => Promise<DaoResponse>
+  proposalModule: () => Promise<AnyContractInfo>
+  dao: () => Promise<AnyContractInfo>
   config: () => Promise<Config>
   depositInfo: ({
     proposalId,
@@ -50,12 +49,12 @@ export class DaoPreProposeMultipleQueryClient
     this.queryExtension = this.queryExtension.bind(this)
   }
 
-  proposalModule = async (): Promise<ProposalModuleResponse> => {
+  proposalModule = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_module: {},
     })
   }
-  dao = async (): Promise<DaoResponse> => {
+  dao = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       dao: {},
     })

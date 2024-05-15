@@ -1,5 +1,4 @@
 import { Chain } from '@chain-registry/types'
-import { fromBase64 } from '@cosmjs/encoding'
 import type { GetStaticProps, GetStaticPropsResult, Redirect } from 'next'
 import { TFunction } from 'next-i18next'
 import removeMarkdown from 'remove-markdown'
@@ -9,7 +8,6 @@ import {
   DaoCoreV2QueryClient,
   DaoVotingCw20StakedQueryClient,
   PolytoneNoteQueryClient,
-  queryIndexer,
 } from '@dao-dao/state'
 import {
   Account,
@@ -24,25 +22,20 @@ import {
   Feature,
   GovProposalVersion,
   GovProposalWithDecodedContent,
-  IndexerDumpState,
   InfoResponse,
   PolytoneProxies,
   ProposalModule,
-  ProposalV1,
-  ProposalV1Beta1,
   SupportedFeatureMap,
 } from '@dao-dao/types'
 import {
+  ArrayOfArrayOfString,
   Config,
-  ListItemsResponse,
   ProposalModuleWithInfo,
 } from '@dao-dao/types/contracts/DaoCore.v2'
 import { cosmos } from '@dao-dao/types/protobuf'
 import {
   CHAIN_SUBDAOS,
   CI,
-  CommonError,
-  ContractName,
   DAO_CORE_ACCENT_ITEM_KEY,
   DAO_STATIC_PROPS_CACHE_SECONDS,
   INVALID_CONTRACT_ERROR_SUBSTRINGS,
@@ -54,7 +47,6 @@ import {
   addressIsModule,
   cosmosSdkVersionIs46OrHigher,
   decodeGovProposal,
-  extractAddressFromMaybeSecretContractInfo,
   getChainForChainId,
   getChainGovernanceDaoDescription,
   getChainIdForAddress,
@@ -69,7 +61,6 @@ import {
   isFeatureSupportedByVersion,
   isValidBech32Address,
   parseContractVersion,
-  polytoneNoteProxyMapToChainIdMap,
   processError,
   retry,
 } from '@dao-dao/utils'
@@ -124,7 +115,7 @@ export class LegacyDaoError extends Error {
 
 // Computes DaoPageWrapperProps for the DAO with optional alterations.
 export const makeGetDaoStaticProps: GetDaoStaticPropsMaker =
-  ({ appMode, coreAddress: _coreAddress, getProps }) =>
+  ({ coreAddress: _coreAddress, getProps }) =>
   async (context) => {
     // Don't query chain if running in CI.
     if (CI) {
@@ -263,49 +254,6 @@ export const makeGetDaoStaticProps: GetDaoStaticPropsMaker =
     const getForChainId = async (
       chainId: string
     ): Promise<GetStaticPropsResult<DaoPageWrapperProps>> => {
-      // If address is polytone proxy, redirect to DAO on native chain.
-      try {
-        const addressInfo = await queryIndexer<ContractVersionInfo>({
-          type: 'contract',
-          chainId,
-          address: coreAddress,
-          formula: 'info',
-        })
-        if (
-          addressInfo &&
-          addressInfo.contract === ContractName.PolytoneProxy
-        ) {
-          // Get voice for this proxy on destination chain.
-          const voice = await queryIndexer({
-            type: 'contract',
-            chainId,
-            // proxy
-            address: coreAddress,
-            formula: 'polytone/proxy/instantiator',
-          })
-
-          const dao = await queryIndexer({
-            type: 'contract',
-            chainId,
-            address: voice,
-            formula: 'polytone/voice/remoteController',
-            args: {
-              // proxy
-              address: coreAddress,
-            },
-          })
-
-          return {
-            redirect: {
-              destination: getDaoPath(appMode, dao),
-              permanent: true,
-            },
-          }
-        }
-      } catch {
-        // If failed, ignore.
-      }
-
       // Add to Sentry error tags if error occurs.
       let coreVersion: ContractVersion | undefined
       try {
@@ -578,118 +526,74 @@ export const makeGetDaoProposalStaticProps = ({
 
         let proposal: GovProposalWithDecodedContent | null = null
         try {
-          // Try to load from indexer first.
-          const indexerProposal:
-            | {
-                id: string
-                data: string
-              }
-            | undefined = await queryIndexer({
-            chainId: chain.chain_id,
-            type: 'generic',
-            formula: 'gov/proposal',
-            args: {
-              id: proposalId,
-            },
-          })
-
-          if (indexerProposal) {
-            if (supportsV1Gov) {
-              proposal = await decodeGovProposal({
-                version: GovProposalVersion.V1,
-                id: BigInt(proposalId),
-                proposal: ProposalV1.decode(fromBase64(indexerProposal.data)),
-              })
-            } else {
-              proposal = await decodeGovProposal({
-                version: GovProposalVersion.V1_BETA_1,
-                id: BigInt(proposalId),
-                proposal: ProposalV1Beta1.decode(
-                  fromBase64(indexerProposal.data),
-                  undefined,
-                  true
-                ),
-              })
-            }
-          }
-        } catch (err) {
-          console.error(err)
-          // Report to Sentry.
-          processError(err)
-        }
-
-        // Fallback to querying chain if indexer failed.
-        if (!proposal) {
-          try {
-            if (supportsV1Gov) {
-              try {
-                const proposalV1 = (
-                  await client.gov.v1.proposal({
-                    proposalId: BigInt(proposalId),
-                  })
-                ).proposal
-                if (!proposalV1) {
-                  throw new Error('NOT_FOUND')
-                }
-
-                proposal = await decodeGovProposal({
-                  version: GovProposalVersion.V1,
-                  id: BigInt(proposalId),
-                  proposal: proposalV1,
+          if (supportsV1Gov) {
+            try {
+              const proposalV1 = (
+                await client.gov.v1.proposal({
+                  proposalId: BigInt(proposalId),
                 })
-              } catch (err) {
-                // Fallback to v1beta1 query if v1 not supported.
-                if (
-                  !(err instanceof Error) ||
-                  !err.message.includes('unknown query path')
-                ) {
-                  // Rethrow other errors.
-                  throw err
-                }
-              }
-            }
-
-            if (!proposal) {
-              const proposalV1Beta1 = (
-                await client.gov.v1beta1.proposal(
-                  {
-                    proposalId: BigInt(proposalId),
-                  },
-                  true
-                )
               ).proposal
-              if (!proposalV1Beta1) {
+              if (!proposalV1) {
                 throw new Error('NOT_FOUND')
               }
 
               proposal = await decodeGovProposal({
-                version: GovProposalVersion.V1_BETA_1,
+                version: GovProposalVersion.V1,
                 id: BigInt(proposalId),
-                proposal: proposalV1Beta1,
+                proposal: proposalV1,
               })
-            }
-          } catch (error) {
-            if (
-              error instanceof Error &&
-              (error.message.includes("doesn't exist: key not found") ||
-                error.message === 'NOT_FOUND')
-            ) {
-              return {
-                url,
-                followingTitle: t('title.proposalNotFound'),
-                // Excluding `proposalId` indicates not found.
-                additionalProps: {
-                  proposalId: null,
-                },
+            } catch (err) {
+              // Fallback to v1beta1 query if v1 not supported.
+              if (
+                !(err instanceof Error) ||
+                !err.message.includes('unknown query path')
+              ) {
+                // Rethrow other errors.
+                throw err
               }
             }
-
-            console.error(error)
-            // Report to Sentry.
-            processError(error)
-            // Throw error to trigger 500.
-            throw new Error(t('error.unexpectedError'))
           }
+
+          if (!proposal) {
+            const proposalV1Beta1 = (
+              await client.gov.v1beta1.proposal(
+                {
+                  proposalId: BigInt(proposalId),
+                },
+                true
+              )
+            ).proposal
+            if (!proposalV1Beta1) {
+              throw new Error('NOT_FOUND')
+            }
+
+            proposal = await decodeGovProposal({
+              version: GovProposalVersion.V1_BETA_1,
+              id: BigInt(proposalId),
+              proposal: proposalV1Beta1,
+            })
+          }
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            (error.message.includes("doesn't exist: key not found") ||
+              error.message === 'NOT_FOUND')
+          ) {
+            return {
+              url,
+              followingTitle: t('title.proposalNotFound'),
+              // Excluding `proposalId` indicates not found.
+              additionalProps: {
+                proposalId: null,
+              },
+            }
+          }
+
+          console.error(error)
+          // Report to Sentry.
+          processError(error)
+          // Throw error to trigger 500.
+          throw new Error(t('error.unexpectedError'))
         }
 
         return {
@@ -882,7 +786,7 @@ interface DaoCoreDumpState {
   activeProposalModules: ProposalModuleWithInfo[]
   created: Date | undefined
   parentDao: DaoParentInfo | null
-  items: ListItemsResponse
+  items: ArrayOfArrayOfString
   polytoneProxies: PolytoneProxies
   isActive: boolean
   activeThreshold: ActiveThreshold | null
@@ -897,120 +801,6 @@ const daoCoreDumpState = async (
 ): Promise<DaoCoreDumpState> => {
   const cwClient = await getCosmWasmClientForChainId(chainId)
 
-  try {
-    const indexerDumpedState = await queryIndexer<IndexerDumpState>({
-      type: 'contract',
-      address: coreAddress,
-      formula: 'daoCore/dumpState',
-      chainId,
-    })
-
-    // Use data from indexer if present.
-    if (indexerDumpedState) {
-      if (
-        LEGACY_DAO_CONTRACT_NAMES.includes(indexerDumpedState.version?.contract)
-      ) {
-        throw new LegacyDaoError()
-      }
-
-      const coreVersion = parseContractVersion(
-        indexerDumpedState.version.version
-      )
-      if (!coreVersion) {
-        throw new Error(serverT('error.failedParsingCoreVersion'))
-      }
-
-      const items =
-        (await queryIndexer<ListItemsResponse>({
-          type: 'contract',
-          address: coreAddress,
-          formula: 'daoCore/listItems',
-          chainId,
-        })) ?? []
-
-      const { admin } = indexerDumpedState
-
-      const parentDaoInfo = await loadParentDaoInfo(
-        chainId,
-        coreAddress,
-        admin,
-        serverT,
-        [...(previousParentAddresses ?? []), coreAddress]
-      )
-
-      // Convert to chainId -> proxy map.
-      const polytoneProxies = polytoneNoteProxyMapToChainIdMap(
-        chainId,
-        indexerDumpedState.polytoneProxies || {}
-      )
-
-      let isActive = true
-      let activeThreshold: ActiveThreshold | null = null
-      try {
-        // All voting modules use the same active queries, so it's safe to just
-        // use one here.
-        const client = new DaoVotingCw20StakedQueryClient(
-          cwClient,
-          indexerDumpedState.voting_module as string
-        )
-        isActive = (await client.isActive()).active
-        activeThreshold =
-          (await client.activeThreshold()).active_threshold || null
-      } catch {
-        // Some voting modules don't support the active queries, so if they
-        // fail, assume it's active.
-      }
-
-      return {
-        ...indexerDumpedState,
-        version: coreVersion,
-        votingModule: {
-          address: indexerDumpedState.voting_module as string,
-          info: indexerDumpedState.votingModuleInfo,
-        },
-        activeProposalModules: indexerDumpedState.proposal_modules.filter(
-          ({ status }) => status === 'enabled' || status === 'Enabled'
-        ),
-        created: indexerDumpedState.createdAt
-          ? new Date(indexerDumpedState.createdAt)
-          : undefined,
-        isActive,
-        activeThreshold,
-        items,
-        parentDao: parentDaoInfo
-          ? {
-              ...parentDaoInfo,
-              // Whether or not this parent has registered its child as a
-              // SubDAO.
-              registeredSubDao:
-                indexerDumpedState.adminInfo?.registeredSubDao ??
-                (parentDaoInfo.coreVersion === ContractVersion.Gov &&
-                  CHAIN_SUBDAOS[chainId]?.includes(coreAddress)) ??
-                false,
-            }
-          : null,
-        polytoneProxies,
-      }
-    }
-  } catch (error) {
-    // Rethrow if legacy DAO.
-    if (error instanceof LegacyDaoError) {
-      throw error
-    }
-
-    // Ignore error. Fallback to querying chain below.
-
-    // Log if not no indexer error.
-    if (
-      !(
-        error instanceof Error &&
-        error.message === CommonError.NoIndexerForChain
-      )
-    ) {
-      console.error(error, processError(error))
-    }
-  }
-
   const daoCoreClient = new DaoCoreV2QueryClient(cwClient, coreAddress)
 
   const dumpedState = await daoCoreClient.dumpState()
@@ -1018,9 +808,7 @@ const daoCoreDumpState = async (
     throw new LegacyDaoError()
   }
 
-  const votingModuleAddress = extractAddressFromMaybeSecretContractInfo(
-    dumpedState.voting_module
-  )
+  const votingModuleAddress = dumpedState.voting_module_address
 
   const [coreVersion, { info: votingModuleInfo }] = await Promise.all([
     parseContractVersion(dumpedState.version.version),
@@ -1040,7 +828,7 @@ const daoCoreDumpState = async (
   )
 
   // Get all items.
-  const items: ListItemsResponse = []
+  const items: ArrayOfArrayOfString = []
   while (true) {
     const _items = await daoCoreClient.listItems({
       startAfter: items[items.length - 1]?.[0],
@@ -1119,30 +907,11 @@ const daoCoreDumpState = async (
     await Promise.all(
       Object.entries(getSupportedChainConfig(chainId)?.polytone || {}).map(
         async ([chainId, { note }]) => {
-          let proxy
-          try {
-            proxy = await queryIndexer<string>({
-              type: 'contract',
-              address: note,
-              formula: 'polytone/note/remoteAddress',
-              args: {
-                address: coreAddress,
-              },
-              chainId,
-            })
-          } catch {
-            // Ignore error.
-          }
-          if (!proxy) {
-            const polytoneNoteClient = new PolytoneNoteQueryClient(
-              cwClient,
-              note
-            )
-            proxy =
-              (await polytoneNoteClient.remoteAddress({
-                localAddress: coreAddress,
-              })) || undefined
-          }
+          const polytoneNoteClient = new PolytoneNoteQueryClient(cwClient, note)
+          const proxy =
+            (await polytoneNoteClient.remoteAddress({
+              localAddress: coreAddress,
+            })) || undefined
 
           return {
             chainId,
@@ -1171,7 +940,7 @@ const daoCoreDumpState = async (
       info: votingModuleInfo,
     },
     activeProposalModules: proposalModules.filter(
-      ({ status }) => status === 'enabled' || status === 'Enabled'
+      ({ status }) => status === 'enabled'
     ),
     created: undefined,
     isActive,

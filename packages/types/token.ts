@@ -38,6 +38,10 @@ export type GenericToken = {
    */
   denomOrAddress: string
   /**
+   * SNIP-20 code hash if type === TokenType.Cw20
+   */
+  snip20CodeHash?: string
+  /**
    * The symbol for this token.
    */
   symbol: string

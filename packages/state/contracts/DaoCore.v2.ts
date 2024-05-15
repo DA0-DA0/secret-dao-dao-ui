@@ -6,63 +6,59 @@ import {
 } from '@cosmjs/cosmwasm-stargate'
 
 import {
+  Addr,
+  AdminNominationResponse,
+  AnyContractInfo,
+  ArrayOfAddr,
+  ArrayOfArrayOfString,
+  ArrayOfProposalModule,
+  ArrayOfSubDao,
+  Auth,
   Binary,
   Coin,
-  CosmosMsgForEmpty,
-  Duration,
-  ModuleInstantiateInfo,
-  Uint128,
-} from '@dao-dao/types/contracts/common'
-import {
-  ActiveProposalModulesResponse,
-  AdminNominationResponse,
-  AdminResponse,
   Config,
-  ConfigResponse,
-  Cw20BalancesResponse,
-  Cw20TokenListResponse,
-  Cw721TokenListResponse,
+  CosmosMsgForEmpty,
   DaoURIResponse,
   DumpStateResponse,
+  Duration,
   GetItemResponse,
   InfoResponse,
-  ListItemsResponse,
-  ListSubDaosResponse,
+  ModuleInstantiateInfo,
   PauseInfoResponse,
-  ProposalModulesResponse,
+  ProposalModuleCountResponse,
+  Snip20BalanceResponse,
   SubDao,
   TotalPowerAtHeightResponse,
-  VotingModuleResponse,
+  Uint128,
   VotingPowerAtHeightResponse,
 } from '@dao-dao/types/contracts/DaoCore.v2'
-import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoCoreV2ReadOnlyInterface {
   contractAddress: string
-  admin: () => Promise<AdminResponse>
+  admin: () => Promise<Addr>
   adminNomination: () => Promise<AdminNominationResponse>
-  config: () => Promise<ConfigResponse>
+  config: () => Promise<Config>
   cw20Balances: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<Cw20BalancesResponse>
+  }) => Promise<Snip20BalanceResponse[]>
   cw20TokenList: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<Cw20TokenListResponse>
+  }) => Promise<ArrayOfAddr>
   cw721TokenList: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<Cw721TokenListResponse>
+  }) => Promise<ArrayOfAddr>
   dumpState: () => Promise<DumpStateResponse>
   getItem: ({ key }: { key: string }) => Promise<GetItemResponse>
   listItems: ({
@@ -71,36 +67,38 @@ export interface DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ListItemsResponse>
+  }) => Promise<ArrayOfArrayOfString>
+  info: () => Promise<InfoResponse>
   proposalModules: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ProposalModulesResponse>
+  }) => Promise<ArrayOfProposalModule>
   activeProposalModules: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ActiveProposalModulesResponse>
+  }) => Promise<ArrayOfProposalModule>
+  proposalModuleCount: () => Promise<ProposalModuleCountResponse>
   pauseInfo: () => Promise<PauseInfoResponse>
-  votingModule: () => Promise<VotingModuleResponse>
+  votingModule: () => Promise<AnyContractInfo>
   listSubDaos: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ListSubDaosResponse>
+  }) => Promise<ArrayOfSubDao>
   daoURI: () => Promise<DaoURIResponse>
   votingPowerAtHeight: ({
-    address,
+    auth,
     height,
   }: {
-    address: string
+    auth: Auth
     height?: number
   }) => Promise<VotingPowerAtHeightResponse>
   totalPowerAtHeight: ({
@@ -108,12 +106,10 @@ export interface DaoCoreV2ReadOnlyInterface {
   }: {
     height?: number
   }) => Promise<TotalPowerAtHeightResponse>
-  info: () => Promise<InfoResponse>
 }
 export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   client: CosmWasmClient
   contractAddress: string
-
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
@@ -126,18 +122,18 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
     this.dumpState = this.dumpState.bind(this)
     this.getItem = this.getItem.bind(this)
     this.listItems = this.listItems.bind(this)
+    this.info = this.info.bind(this)
     this.proposalModules = this.proposalModules.bind(this)
     this.activeProposalModules = this.activeProposalModules.bind(this)
+    this.proposalModuleCount = this.proposalModuleCount.bind(this)
     this.pauseInfo = this.pauseInfo.bind(this)
     this.votingModule = this.votingModule.bind(this)
     this.listSubDaos = this.listSubDaos.bind(this)
     this.daoURI = this.daoURI.bind(this)
     this.votingPowerAtHeight = this.votingPowerAtHeight.bind(this)
     this.totalPowerAtHeight = this.totalPowerAtHeight.bind(this)
-    this.info = this.info.bind(this)
   }
-
-  admin = async (): Promise<AdminResponse> => {
+  admin = async (): Promise<Addr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       admin: {},
     })
@@ -147,7 +143,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
       admin_nomination: {},
     })
   }
-  config = async (): Promise<ConfigResponse> => {
+  config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -158,7 +154,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<Cw20BalancesResponse> => {
+  }): Promise<Snip20BalanceResponse[]> => {
     return this.client.queryContractSmart(this.contractAddress, {
       cw20_balances: {
         limit,
@@ -172,7 +168,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<Cw20TokenListResponse> => {
+  }): Promise<ArrayOfAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       cw20_token_list: {
         limit,
@@ -186,7 +182,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<Cw721TokenListResponse> => {
+  }): Promise<ArrayOfAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       cw721_token_list: {
         limit,
@@ -212,12 +208,17 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ListItemsResponse> => {
+  }): Promise<ArrayOfArrayOfString> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_items: {
         limit,
         start_after: startAfter,
       },
+    })
+  }
+  info = async (): Promise<InfoResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      info: {},
     })
   }
   proposalModules = async ({
@@ -226,7 +227,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ProposalModulesResponse> => {
+  }): Promise<ArrayOfProposalModule> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_modules: {
         limit,
@@ -240,7 +241,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ActiveProposalModulesResponse> => {
+  }): Promise<ArrayOfProposalModule> => {
     return this.client.queryContractSmart(this.contractAddress, {
       active_proposal_modules: {
         limit,
@@ -248,12 +249,17 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
       },
     })
   }
+  proposalModuleCount = async (): Promise<ProposalModuleCountResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      proposal_module_count: {},
+    })
+  }
   pauseInfo = async (): Promise<PauseInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       pause_info: {},
     })
   }
-  votingModule = async (): Promise<VotingModuleResponse> => {
+  votingModule = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       voting_module: {},
     })
@@ -264,7 +270,7 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ListSubDaosResponse> => {
+  }): Promise<ArrayOfSubDao> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_sub_daos: {
         limit,
@@ -278,15 +284,15 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
     })
   }
   votingPowerAtHeight = async ({
-    address,
+    auth,
     height,
   }: {
-    address: string
+    auth: Auth
     height?: number
   }): Promise<VotingPowerAtHeightResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       voting_power_at_height: {
-        address,
+        auth,
         height,
       },
     })
@@ -302,11 +308,6 @@ export class DaoCoreV2QueryClient implements DaoCoreV2ReadOnlyInterface {
       },
     })
   }
-  info = async (): Promise<InfoResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      info: {},
-    })
-  }
 }
 export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
   contractAddress: string
@@ -319,7 +320,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   executeProposalHook: (
     {
@@ -329,7 +330,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   pause: (
     {
@@ -339,21 +340,25 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   receive: (
     {
       amount,
+      from,
+      memo,
       msg,
       sender,
     }: {
       amount: Uint128
-      msg: Binary
-      sender: string
+      from: Addr
+      memo?: string
+      msg?: Binary
+      sender: Addr
     },
     fee?: number | StdFee | 'auto',
-    memo?: string,
-    funds?: Coin[]
+    _memo?: string,
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   receiveNft: (
     {
@@ -361,13 +366,13 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
       sender,
       tokenId,
     }: {
-      msg: Binary
-      sender: string
+      msg?: Binary
+      sender: Addr
       tokenId: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   removeItem: (
     {
@@ -377,7 +382,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   setItem: (
     {
@@ -389,7 +394,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   nominateAdmin: (
     {
@@ -399,17 +404,17 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   acceptAdminNomination: (
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   withdrawAdminNomination: (
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateConfig: (
     {
@@ -419,9 +424,9 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
-  updateCw20List: (
+  updateSnip20List: (
     {
       toAdd,
       toRemove,
@@ -431,9 +436,9 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
-  updateCw721List: (
+  updateSnip721List: (
     {
       toAdd,
       toRemove,
@@ -443,7 +448,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateProposalModules: (
     {
@@ -455,7 +460,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateVotingModule: (
     {
@@ -465,7 +470,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateSubDaos: (
     {
@@ -477,7 +482,7 @@ export interface DaoCoreV2Interface extends DaoCoreV2ReadOnlyInterface {
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
 }
 export class DaoCoreV2Client
@@ -487,7 +492,6 @@ export class DaoCoreV2Client
   client: SigningCosmWasmClient
   sender: string
   contractAddress: string
-
   constructor(
     client: SigningCosmWasmClient,
     sender: string,
@@ -508,22 +512,21 @@ export class DaoCoreV2Client
     this.acceptAdminNomination = this.acceptAdminNomination.bind(this)
     this.withdrawAdminNomination = this.withdrawAdminNomination.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
-    this.updateCw20List = this.updateCw20List.bind(this)
-    this.updateCw721List = this.updateCw721List.bind(this)
+    this.updateSnip20List = this.updateSnip20List.bind(this)
+    this.updateSnip721List = this.updateSnip721List.bind(this)
     this.updateProposalModules = this.updateProposalModules.bind(this)
     this.updateVotingModule = this.updateVotingModule.bind(this)
     this.updateSubDaos = this.updateSubDaos.bind(this)
   }
-
   executeAdminMsgs = async (
     {
       msgs,
     }: {
       msgs: CosmosMsgForEmpty[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -535,7 +538,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   executeProposalHook = async (
@@ -544,9 +547,9 @@ export class DaoCoreV2Client
     }: {
       msgs: CosmosMsgForEmpty[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -558,7 +561,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   pause = async (
@@ -567,9 +570,9 @@ export class DaoCoreV2Client
     }: {
       duration: Duration
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -581,22 +584,26 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   receive = async (
     {
       amount,
+      from,
+      memo,
       msg,
       sender,
     }: {
       amount: Uint128
-      msg: Binary
-      sender: string
+      from: Addr
+      memo?: string
+      msg?: Binary
+      sender: Addr
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
-    memo?: string,
-    funds?: Coin[]
+    fee: number | StdFee | 'auto' = 'auto',
+    _memo?: string,
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -604,13 +611,15 @@ export class DaoCoreV2Client
       {
         receive: {
           amount,
+          from,
+          memo,
           msg,
           sender,
         },
       },
       fee,
-      memo,
-      funds
+      _memo,
+      _funds
     )
   }
   receiveNft = async (
@@ -619,13 +628,13 @@ export class DaoCoreV2Client
       sender,
       tokenId,
     }: {
-      msg: Binary
-      sender: string
+      msg?: Binary
+      sender: Addr
       tokenId: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -639,7 +648,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   removeItem = async (
@@ -648,9 +657,9 @@ export class DaoCoreV2Client
     }: {
       key: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -662,7 +671,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   setItem = async (
@@ -673,9 +682,9 @@ export class DaoCoreV2Client
       key: string
       value: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -688,7 +697,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   nominateAdmin = async (
@@ -697,9 +706,9 @@ export class DaoCoreV2Client
     }: {
       admin?: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -711,13 +720,13 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   acceptAdminNomination = async (
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -727,13 +736,13 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   withdrawAdminNomination = async (
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -743,7 +752,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateConfig = async (
@@ -752,9 +761,9 @@ export class DaoCoreV2Client
     }: {
       config: Config
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -766,10 +775,10 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
-  updateCw20List = async (
+  updateSnip20List = async (
     {
       toAdd,
       toRemove,
@@ -777,25 +786,25 @@ export class DaoCoreV2Client
       toAdd: string[]
       toRemove: string[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
-        update_cw20_list: {
+        update_snip20_list: {
           to_add: toAdd,
           to_remove: toRemove,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
-  updateCw721List = async (
+  updateSnip721List = async (
     {
       toAdd,
       toRemove,
@@ -803,22 +812,22 @@ export class DaoCoreV2Client
       toAdd: string[]
       toRemove: string[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
-        update_cw721_list: {
+        update_snip721_list: {
           to_add: toAdd,
           to_remove: toRemove,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateProposalModules = async (
@@ -829,9 +838,9 @@ export class DaoCoreV2Client
       toAdd: ModuleInstantiateInfo[]
       toDisable: string[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -844,7 +853,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateVotingModule = async (
@@ -853,9 +862,9 @@ export class DaoCoreV2Client
     }: {
       module: ModuleInstantiateInfo
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -867,7 +876,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateSubDaos = async (
@@ -878,9 +887,9 @@ export class DaoCoreV2Client
       toAdd: SubDao[]
       toRemove: string[]
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -893,7 +902,7 @@ export class DaoCoreV2Client
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
 }

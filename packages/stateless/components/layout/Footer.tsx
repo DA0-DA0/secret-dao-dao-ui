@@ -1,8 +1,6 @@
-import { ArrowOutwardRounded, Code, Dns, Twitter } from '@mui/icons-material'
+import { ArrowOutwardRounded, Code, Twitter } from '@mui/icons-material'
 import { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { SITE_URL } from '@dao-dao/utils'
 
 import { ButtonLink } from '../buttons'
 import { GithubIcon } from '../icons'
@@ -32,11 +30,6 @@ export const Footer = () => {
         Icon={GithubIcon}
         href="https://github.com/DA0-DA0"
         name={t('title.github')}
-      />
-      <FooterItem
-        Icon={Dns}
-        href={SITE_URL + '/status'}
-        name={t('title.status')}
       />
     </div>
   )

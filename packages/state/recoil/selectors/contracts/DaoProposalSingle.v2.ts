@@ -1,21 +1,16 @@
 import { selectorFamily } from 'recoil'
 
-import { WithChainId } from '@dao-dao/types'
+import { SecretAnyContractInfo, WithChainId } from '@dao-dao/types'
 import {
-  ListVotesResponse,
-  VoteResponse,
-} from '@dao-dao/types/contracts/DaoProposalSingle.common'
-import {
-  ConfigResponse,
-  ListProposalsResponse,
-  ProposalCountResponse,
-  ProposalCreationPolicyResponse,
-  ProposalHooksResponse,
+  Config,
+  HooksResponse,
+  ProposalCreationPolicy,
+  ProposalListResponse,
   ProposalResponse,
-  ReverseProposalsResponse,
-  VoteHooksResponse,
+  VoteInfo,
+  VoteListResponse,
+  VoteResponse,
 } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
-import { extractAddressFromMaybeSecretContractInfo } from '@dao-dao/utils'
 
 import {
   DaoProposalSingleV2Client,
@@ -28,7 +23,6 @@ import {
 } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
 import { contractInfoSelector } from '../contract'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -69,28 +63,15 @@ export const executeClient = selectorFamily<
   dangerouslyAllowMutability: true,
 })
 
-export const configSelector = selectorFamily<ConfigResponse, QueryClientParams>(
-  {
-    key: 'daoProposalSingleV2Config',
-    get:
-      (queryClientParams) =>
-      async ({ get }) => {
-        const config = get(
-          queryContractIndexerSelector({
-            ...queryClientParams,
-            formula: 'daoProposalSingle/config',
-          })
-        )
-        if (config) {
-          return config
-        }
-
-        // If indexer query fails, fallback to contract query.
-        const client = get(queryClient(queryClientParams))
-        return await client.config()
-      },
-  }
-)
+export const configSelector = selectorFamily<Config, QueryClientParams>({
+  key: 'daoProposalSingleV2Config',
+  get:
+    (queryClientParams) =>
+    async ({ get }) => {
+      const client = get(queryClient(queryClientParams))
+      return await client.config()
+    },
+})
 export const proposalSelector = selectorFamily<
   ProposalResponse,
   QueryClientParams & {
@@ -101,36 +82,20 @@ export const proposalSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshProposalsIdAtom) +
-        get(
-          refreshProposalIdAtom({
-            address: queryClientParams.contractAddress,
-            proposalId: params[0].proposalId,
-          })
-        )
-
-      const proposalResponse = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/proposal',
-          args: {
-            id: params[0].proposalId,
-          },
-          id,
+      get(refreshProposalsIdAtom)
+      get(
+        refreshProposalIdAtom({
+          address: queryClientParams.contractAddress,
+          proposalId: params[0].proposalId,
         })
       )
-      if (proposalResponse) {
-        return proposalResponse
-      }
 
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.proposal(...params)
     },
 })
 export const listProposalsSelector = selectorFamily<
-  ListProposalsResponse,
+  ProposalListResponse,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['listProposals']>
   }
@@ -139,27 +104,14 @@ export const listProposalsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshProposalsIdAtom)
+      get(refreshProposalsIdAtom)
 
-      const proposals = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/listProposals',
-          args: params[0],
-          id,
-        })
-      )
-      if (proposals) {
-        return { proposals }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listProposals(...params)
     },
 })
 export const reverseProposalsSelector = selectorFamily<
-  ReverseProposalsResponse,
+  ProposalListResponse,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['reverseProposals']>
   }
@@ -168,47 +120,18 @@ export const reverseProposalsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshProposalsIdAtom)
+      get(refreshProposalsIdAtom)
 
-      const proposals = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/reverseProposals',
-          args: params[0],
-          id,
-        })
-      )
-      if (proposals) {
-        return { proposals }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.reverseProposals(...params)
     },
 })
-export const proposalCountSelector = selectorFamily<
-  ProposalCountResponse,
-  QueryClientParams
->({
+export const proposalCountSelector = selectorFamily<number, QueryClientParams>({
   key: 'daoProposalSingleV2ProposalCount',
   get:
     (queryClientParams) =>
     async ({ get }) => {
-      const id = get(refreshProposalsIdAtom)
-
-      const count = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/proposalCount',
-          id,
-        })
-      )
-      if (typeof count === 'number') {
-        return count
-      }
-
-      // If indexer query fails, fallback to contract query.
+      get(refreshProposalsIdAtom)
       const client = get(queryClient(queryClientParams))
       return await client.proposalCount()
     },
@@ -223,35 +146,20 @@ export const getVoteSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshProposalsIdAtom) +
-        get(
-          refreshProposalIdAtom({
-            address: queryClientParams.contractAddress,
-            proposalId: params[0].proposalId,
-          })
-        )
-
-      const vote = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/vote',
-          args: params[0],
-          id,
+      get(refreshProposalsIdAtom)
+      get(
+        refreshProposalIdAtom({
+          address: queryClientParams.contractAddress,
+          proposalId: params[0].proposalId,
         })
       )
-      // Null when indexer fails. Undefined when no vote exists.
-      if (vote !== null) {
-        return { vote: vote || null }
-      }
 
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.getVote(...params)
     },
 })
 export const listVotesSelector = selectorFamily<
-  ListVotesResponse,
+  VoteListResponse,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['listVotes']>
   }
@@ -260,34 +168,20 @@ export const listVotesSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshProposalsIdAtom) +
-        get(
-          refreshProposalIdAtom({
-            address: queryClientParams.contractAddress,
-            proposalId: params[0].proposalId,
-          })
-        )
-
-      const votes = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/listVotes',
-          args: params[0],
-          id,
+      get(refreshProposalsIdAtom)
+      get(
+        refreshProposalIdAtom({
+          address: queryClientParams.contractAddress,
+          proposalId: params[0].proposalId,
         })
       )
-      if (votes) {
-        return { votes }
-      }
 
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVotes(...params)
     },
 })
 export const proposalCreationPolicySelector = selectorFamily<
-  ProposalCreationPolicyResponse,
+  ProposalCreationPolicy,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['proposalCreationPolicy']>
   }
@@ -296,23 +190,12 @@ export const proposalCreationPolicySelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const creationPolicy = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/creationPolicy',
-        })
-      )
-      if (creationPolicy) {
-        return creationPolicy
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.proposalCreationPolicy(...params)
     },
 })
 export const proposalHooksSelector = selectorFamily<
-  ProposalHooksResponse,
+  HooksResponse,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['proposalHooks']>
   }
@@ -326,7 +209,7 @@ export const proposalHooksSelector = selectorFamily<
     },
 })
 export const voteHooksSelector = selectorFamily<
-  VoteHooksResponse,
+  HooksResponse,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['voteHooks']>
   }
@@ -340,7 +223,7 @@ export const voteHooksSelector = selectorFamily<
     },
 })
 export const daoSelector = selectorFamily<
-  string,
+  SecretAnyContractInfo,
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['dao']>
   }
@@ -349,21 +232,48 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoProposalSingle/dao',
-        })
-      )
-      if (dao && typeof dao === 'string') {
-        return dao
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
-      return extractAddressFromMaybeSecretContractInfo(
-        await client.dao(...params)
-      )
+      return await client.dao(...params)
     },
 })
 export const infoSelector = contractInfoSelector
+
+const LIST_ALL_VOTES_LIMIT = 30
+export const listAllVotesSelector = selectorFamily<
+  VoteInfo[],
+  QueryClientParams & {
+    proposalId: number
+  }
+>({
+  key: 'daoProposalSingleV2ListAllVotes',
+  get:
+    ({ proposalId, ...queryClientParams }) =>
+    async ({ get }) => {
+      const votes: VoteInfo[] = []
+
+      while (true) {
+        const response = get(
+          listVotesSelector({
+            ...queryClientParams,
+            params: [
+              {
+                startAfter: votes[votes.length - 1]?.voter,
+                proposalId,
+                limit: LIST_ALL_VOTES_LIMIT,
+              },
+            ],
+          })
+        )
+        if (!response?.votes.length) break
+
+        votes.push(...response.votes)
+
+        // If we have less than the limit of items, we've exhausted them.
+        if (response.votes.length < LIST_ALL_VOTES_LIMIT) {
+          break
+        }
+      }
+
+      return votes
+    },
+})

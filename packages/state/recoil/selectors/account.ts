@@ -16,7 +16,7 @@ import {
   TokenType,
   WithChainId,
 } from '@dao-dao/types'
-import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import { BaseAccount } from '@dao-dao/types/protobuf/codegen/cosmos/auth/v1beta1/auth'
 import { LegacyAminoPubKey } from '@dao-dao/types/protobuf/codegen/cosmos/crypto/multisig/keys'
 import { PubKey } from '@dao-dao/types/protobuf/codegen/cosmos/crypto/secp256k1/keys'

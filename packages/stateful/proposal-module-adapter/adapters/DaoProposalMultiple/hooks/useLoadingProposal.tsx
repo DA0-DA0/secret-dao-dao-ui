@@ -69,8 +69,7 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
   }
 
   // Indexer may provide dates.
-  const { proposal, completedAt, executedAt, closedAt } =
-    loadingProposalResponse.data
+  const { proposal } = loadingProposalResponse.data
 
   const expirationDate = convertExpirationToDate(
     blocksPerYearLoadable.contents,
@@ -96,11 +95,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
       ? expirationDate.getTime() > Date.now()
       : proposal.status === ProposalStatusEnum.Open
 
-  const completionDate =
-    typeof completedAt === 'string' && new Date(completedAt)
-  const executionDate = typeof executedAt === 'string' && new Date(executedAt)
-  const closeDate = typeof closedAt === 'string' && new Date(closedAt)
-
   const dateDisplay: { label: string; content: ReactNode } | undefined =
     votingOpen
       ? expirationDate && expirationDate.getTime() > Date.now()
@@ -113,21 +107,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
             ),
           }
         : undefined
-      : executionDate
-      ? {
-          label: t('proposalStatusTitle.executed'),
-          content: formatDate(executionDate),
-        }
-      : closeDate
-      ? {
-          label: t('proposalStatusTitle.closed'),
-          content: formatDate(closeDate),
-        }
-      : completionDate
-      ? {
-          label: t('info.completed'),
-          content: formatDate(completionDate),
-        }
       : expirationDate
       ? {
           label:
@@ -152,8 +131,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
       ...proposal,
       timestampInfo,
       votingOpen,
-      executedAt:
-        typeof executedAt === 'string' ? new Date(executedAt) : undefined,
       vetoTimelockExpiration,
     },
   }

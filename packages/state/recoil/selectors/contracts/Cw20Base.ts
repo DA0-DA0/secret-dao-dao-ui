@@ -26,7 +26,6 @@ import {
   signingCosmWasmClientAtom,
 } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -73,21 +72,8 @@ export const balanceSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(params[0].address))
+      get(refreshWalletBalancesIdAtom(params[0].address))
 
-      const balance = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/balance',
-          args: params[0],
-          id,
-        })
-      )
-      if (balance) {
-        return { balance }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.balance(...params)
     },
@@ -102,17 +88,6 @@ export const tokenInfoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const tokenInfo = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/tokenInfo',
-        })
-      )
-      if (tokenInfo) {
-        return tokenInfo
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.tokenInfo(...params)
     },
@@ -127,17 +102,6 @@ export const minterSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const minter = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/minter',
-        })
-      )
-      if (minter) {
-        return minter
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.minter(...params)
     },
@@ -152,21 +116,8 @@ export const allowanceSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(params[0].owner))
+      get(refreshWalletBalancesIdAtom(params[0].owner))
 
-      const allowance = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/allowance',
-          args: params[0],
-          id,
-        })
-      )
-      if (allowance) {
-        return allowance
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.allowance(...params)
     },
@@ -181,21 +132,8 @@ export const allAllowancesSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(params[0].owner))
+      get(refreshWalletBalancesIdAtom(params[0].owner))
 
-      const allowances = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/ownerAllowances',
-          args: params[0],
-          id,
-        })
-      )
-      if (allowances) {
-        return { allowances }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.allAllowances(...params)
     },
@@ -210,18 +148,6 @@ export const allAccountsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const accounts = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/allAccounts',
-          args: params[0],
-        })
-      )
-      if (accounts) {
-        return { accounts }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.allAccounts(...params)
     },
@@ -236,17 +162,6 @@ export const marketingInfoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const marketingInfo = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/marketingInfo',
-        })
-      )
-      if (marketingInfo) {
-        return marketingInfo
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.marketingInfo(...params)
     },
@@ -295,19 +210,6 @@ export const logoUrlSelector = selectorFamily<
   get:
     ({ contractAddress, chainId }) =>
     ({ get }) => {
-      const logoUrl = get(
-        queryContractIndexerSelector({
-          contractAddress,
-          chainId,
-          formula: 'cw20/logoUrl',
-        })
-      )
-      // Null when indexer fails.
-      if (logoUrl !== null) {
-        return logoUrl
-      }
-
-      // If indexer query fails, fallback to contract query.
       const logoInfo = get(
         // Cw20 on some chains do not support marketing info.
         waitForAllSettled([
@@ -360,15 +262,18 @@ export const topAccountBalancesSelector = selectorFamily<
   get:
     ({ limit, ...queryClientParams }) =>
     ({ get }) =>
-      get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/topAccountBalances',
-          args: {
-            limit,
-          },
-        })
-      ) ?? undefined,
+      // get(
+      //   queryContractIndexerSelector({
+      //     ...queryClientParams,
+      //     formula: 'cw20/topAccountBalances',
+      //     args: {
+      //       limit,
+      //     },
+      //   })
+      // ) ?? undefined,
+
+      // No indexer on Secret Network.
+      undefined,
 })
 
 // Get DAOs that use this cw20 token as their governance token from the indexer.
@@ -377,13 +282,16 @@ export const daosSelector = selectorFamily<string[], QueryClientParams>({
   get:
     (queryClientParams) =>
     ({ get }) =>
-      get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw20/daos',
-          noFallback: true,
-        })
-      ) ?? [],
+      // get(
+      //   queryContractIndexerSelector({
+      //     ...queryClientParams,
+      //     formula: 'cw20/daos',
+      //     noFallback: true,
+      //   })
+      // ) ?? [],
+
+      // No indexer on Secret Network.
+      [],
 })
 
 // Get DAOs that use this cw20 token as their governance token from the indexer,

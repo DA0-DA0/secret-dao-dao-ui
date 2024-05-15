@@ -5,7 +5,7 @@ import {
   BaseProposalWalletVoteProps,
   PreProposeModuleType,
 } from '@dao-dao/types'
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import { useProposalModuleAdapterOptions } from '../../../react'
 

@@ -1,5 +1,4 @@
 import {
-  Loadable,
   atomFamily,
   noWait,
   selectorFamily,
@@ -9,36 +8,26 @@ import {
 
 import {
   accountsSelector,
-  genericTokenSelector,
   nativeBalancesSelector,
   nativeDelegatedBalanceSelector,
-  queryWalletIndexerSelector,
   refreshHiddenBalancesAtom,
   refreshSavedTxsAtom,
   refreshWalletBalancesIdAtom,
 } from '@dao-dao/state/recoil'
 import {
   AccountTxSave,
-  AccountType,
-  ContractVersion,
-  ContractVersionInfo,
   LazyDaoCardProps,
   LazyNftCardInfo,
   TokenCardInfo,
-  TokenType,
   WithChainId,
 } from '@dao-dao/types'
-import { Config } from '@dao-dao/types/contracts/DaoCore.v2'
 import {
   HIDDEN_BALANCE_PREFIX,
-  INACTIVE_DAO_NAMES,
   KVPK_API_BASE,
   ME_SAVED_TX_PREFIX,
   convertMicroDenomToDenomWithDecimals,
-  getFallbackImage,
   getNativeTokenForChainId,
   loadableToLoadingData,
-  parseContractVersion,
 } from '@dao-dao/utils'
 
 import { lazyDaoCardPropsSelector } from './dao'
@@ -174,11 +163,6 @@ export const hiddenBalancesSelector = selectorFamily<string[], string>({
     },
 })
 
-type ContractWithBalance = {
-  contractAddress: string
-  balance: string | undefined
-}
-
 // lazyInfo must be loaded in the component separately, since it refreshes on a
 // timer and we don't want this whole selector to reevaluate and load when that
 // refreshes. Use `tokenCardLazyInfoSelector`.
@@ -192,7 +176,7 @@ export const walletTokenCardInfosSelector = selectorFamily<
   get:
     ({ walletAddress, chainId }) =>
     ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(walletAddress))
+      get(refreshWalletBalancesIdAtom(walletAddress))
 
       const allAccounts = get(
         accountsSelector({
@@ -211,35 +195,8 @@ export const walletTokenCardInfosSelector = selectorFamily<
           )
         )
       )
-      const cw20ContractsLoadable: Loadable<ContractWithBalance[] | undefined> =
-        get(
-          noWait(
-            queryWalletIndexerSelector({
-              chainId,
-              walletAddress,
-              formula: 'tokens/list',
-              id,
-              noFallback: true,
-            })
-          )
-        )
-      const cw20Contracts =
-        cw20ContractsLoadable.state === 'hasValue'
-          ? cw20ContractsLoadable.contents ?? []
-          : []
-      const cw20s = get(
-        noWait(
-          waitForAny(
-            cw20Contracts.map((c) =>
-              genericTokenSelector({
-                type: TokenType.Cw20,
-                denomOrAddress: c.contractAddress,
-                chainId,
-              })
-            )
-          )
-        )
-      )
+
+      // No indexer on Secret Network so can't load SNIP20s.
 
       const infos: TokenCardInfo[] = [
         ...nativeBalances.flatMap((accountBalances, accountIndex) =>
@@ -291,47 +248,6 @@ export const walletTokenCardInfosSelector = selectorFamily<
             return info
           })
         ),
-        ...(cw20s.valueMaybe() || []).flatMap((tokenLoadable, index) => {
-          const token = tokenLoadable.valueMaybe()
-          if (!token) {
-            return []
-          }
-
-          const unstakedBalance = convertMicroDenomToDenomWithDecimals(
-            cw20Contracts[index].balance || '0',
-            token.decimals
-          )
-
-          const lazyInfo = get(
-            noWait(
-              tokenCardLazyInfoSelector({
-                owner: walletAddress,
-                token,
-                unstakedBalance,
-              })
-            )
-          )
-
-          const info: TokenCardInfo = {
-            owner: {
-              type: AccountType.Native,
-              chainId,
-              address: walletAddress,
-            },
-            token,
-            isGovernanceToken: false,
-            unstakedBalance,
-            // No unstaking info for CW20.
-            hasStakingInfo: false,
-            lazyInfo: loadableToLoadingData(lazyInfo, {
-              usdUnitPrice: undefined,
-              stakingInfo: undefined,
-              totalBalance: unstakedBalance,
-            }),
-          }
-
-          return info
-        }),
       ]
 
       return infos
@@ -393,38 +309,41 @@ export const lazyWalletDaosSelector = selectorFamily<
   get:
     ({ chainId, address }) =>
     ({ get }) => {
-      const daos: {
-        dao: string
-        info: ContractVersionInfo
-        config: Config
-        proposalCount: number
-      }[] = get(
-        queryWalletIndexerSelector({
-          chainId,
-          walletAddress: address,
-          formula: 'daos/memberOf',
-          noFallback: true,
-        })
-      )
-      if (!daos || !Array.isArray(daos)) {
-        return []
-      }
+      // No indexer on Secret Network.
+      return []
 
-      const lazyDaoCards = daos.map(
-        ({ dao, info, config, proposalCount }): LazyDaoCardProps => ({
-          chainId,
-          coreAddress: dao,
-          coreVersion:
-            parseContractVersion(info.version) || ContractVersion.Unknown,
-          name: config.name,
-          description: config.description,
-          imageUrl: config.image_url || getFallbackImage(dao),
-          isInactive:
-            INACTIVE_DAO_NAMES.includes(config.name) || proposalCount === 0,
-        })
-      )
+      // const daos: {
+      //   dao: string
+      //   info: ContractVersionInfo
+      //   config: Config
+      //   proposalCount: number
+      // }[] = get(
+      //   queryWalletIndexerSelector({
+      //     chainId,
+      //     walletAddress: address,
+      //     formula: 'daos/memberOf',
+      //     noFallback: true,
+      //   })
+      // )
+      // if (!daos || !Array.isArray(daos)) {
+      //   return []
+      // }
 
-      return lazyDaoCards
+      // const lazyDaoCards = daos.map(
+      //   ({ dao, info, config, proposalCount }): LazyDaoCardProps => ({
+      //     chainId,
+      //     coreAddress: dao,
+      //     coreVersion:
+      //       parseContractVersion(info.version) || ContractVersion.Unknown,
+      //     name: config.name,
+      //     description: config.description,
+      //     imageUrl: config.image_url || getFallbackImage(dao),
+      //     isInactive:
+      //       INACTIVE_DAO_NAMES.includes(config.name) || proposalCount === 0,
+      //   })
+      // )
+
+      // return lazyDaoCards
     },
 })
 

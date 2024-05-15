@@ -16,8 +16,8 @@ import {
 import {
   blockHeightTimestampSafeSelector,
   cosmWasmClientForChainSelector,
+  secretCosmWasmClientForChainSelector,
 } from './chain'
-import { queryContractIndexerSelector } from './indexer'
 
 export const contractInstantiateTimeSelector = selectorFamily<
   Date | undefined,
@@ -27,22 +27,6 @@ export const contractInstantiateTimeSelector = selectorFamily<
   get:
     ({ address, chainId }) =>
     async ({ get }) => {
-      const instantiatedAt = get(
-        queryContractIndexerSelector({
-          contractAddress: address,
-          chainId,
-          formula: 'instantiatedAt',
-          // This never changes, so query even if the indexer is behind.
-          noFallback: true,
-        })
-      )
-      // Null when indexer fails.
-      if (instantiatedAt) {
-        return new Date(instantiatedAt)
-      }
-
-      // If indexer fails, fallback to querying chain.
-
       const client = get(cosmWasmClientForChainSelector(chainId))
       const events = await client.searchTx([
         { key: 'instantiate._contract_address', value: address },
@@ -132,18 +116,6 @@ export const contractInfoSelector = selectorFamily<
   get:
     ({ contractAddress, chainId }) =>
     async ({ get }) => {
-      const info = get(
-        queryContractIndexerSelector({
-          contractAddress,
-          chainId,
-          formula: 'info',
-        })
-      )
-      if (info) {
-        return { info }
-      }
-
-      // If indexer fails, fallback to querying chain.
       const client = get(cosmWasmClientForChainSelector(chainId))
 
       if (isSecretNetwork(chainId)) {
@@ -168,6 +140,22 @@ export const contractInfoSelector = selectorFamily<
       throw new Error(
         'Failed to query contract info for contract: ' + contractAddress
       )
+    },
+})
+
+/**
+ * Get code hash for a Secret Network contract.
+ */
+export const secretContractCodeHashSelector = selectorFamily<
+  string,
+  WithChainId<{ contractAddress: string }>
+>({
+  key: 'secretContractCodeHash',
+  get:
+    ({ chainId, contractAddress }) =>
+    async ({ get }) => {
+      const client = get(secretCosmWasmClientForChainSelector(chainId))
+      return client.queryCodeHashForContractAddress(contractAddress)
     },
 })
 

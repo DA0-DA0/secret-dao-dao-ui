@@ -94,7 +94,8 @@ export const makeCreateNftCollectionAction: ActionMaker<
             instantiate: {
               admin: creator,
               code_id:
-                getSupportedChainConfig(chainId)?.codeIds.Cw721Base ?? -1,
+                getSupportedChainConfig(chainId)?.codeIds.Snip721Base?.codeId ??
+                -1,
               funds: [],
               label: name,
               msg: {

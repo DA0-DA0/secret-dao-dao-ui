@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago'
 import { constSelector, waitForAll } from 'recoil'
 
 import {
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   NeutronCwdSubdaoTimelockSingleSelectors,
   blockHeightSelector,
   blocksPerYearSelector,
@@ -48,7 +48,7 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
   } = useProposalModuleAdapterOptions()
 
   const loadingProposalResponse = useCachedLoading(
-    DaoProposalSingleCommonSelectors.proposalSelector({
+    DaoProposalSingleV2Selectors.proposalSelector({
       contractAddress: proposalModuleAddress,
       chainId,
       params: [
@@ -173,9 +173,7 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
     return { loading: true }
   }
 
-  // Indexer may provide dates.
-  const { proposal, completedAt, executedAt, closedAt } =
-    loadingProposalResponse.data
+  const { proposal } = loadingProposalResponse.data
 
   const expirationDate = convertExpirationToDate(
     blocksPerYearLoadable.contents,
@@ -209,11 +207,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
       !!expirationDate &&
       expirationDate.getTime() > Date.now())
 
-  const completionDate =
-    typeof completedAt === 'string' && new Date(completedAt)
-  const executionDate = typeof executedAt === 'string' && new Date(executedAt)
-  const closeDate = typeof closedAt === 'string' && new Date(closedAt)
-
   const dateDisplay: ProposalTimestampInfo['display'] | undefined = votingOpen
     ? expirationDate && expirationDate.getTime() > Date.now()
       ? {
@@ -226,24 +219,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
           ),
         }
       : undefined
-    : executionDate
-    ? {
-        label: t('proposalStatusTitle.executed'),
-        tooltip: formatDateTimeTz(executionDate),
-        content: formatDate(executionDate),
-      }
-    : closeDate
-    ? {
-        label: t('proposalStatusTitle.closed'),
-        tooltip: formatDateTimeTz(closeDate),
-        content: formatDate(closeDate),
-      }
-    : completionDate
-    ? {
-        label: t('info.completed'),
-        tooltip: formatDateTimeTz(completionDate),
-        content: formatDate(completionDate),
-      }
     : expirationDate
     ? {
         label:
@@ -270,8 +245,6 @@ export const useLoadingProposal = (): LoadingData<ProposalWithMetadata> => {
       ...proposal,
       timestampInfo,
       votingOpen,
-      executedAt:
-        typeof executedAt === 'string' ? new Date(executedAt) : undefined,
       // On error, just return undefined so we still render the proposal.
       approverProposalId: approverProposalId.errored
         ? undefined

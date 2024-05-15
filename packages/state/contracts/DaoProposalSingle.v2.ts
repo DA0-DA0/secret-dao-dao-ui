@@ -9,31 +9,26 @@ import {
   Coin,
   CosmosMsgForEmpty,
   Duration,
+  SecretAnyContractInfo,
 } from '@dao-dao/types/contracts/common'
 import {
-  ListVotesResponse,
+  Config,
+  HooksResponse,
+  InfoResponse,
+  PreProposeInfo,
+  ProposalCreationPolicy,
+  ProposalListResponse,
+  ProposalResponse,
   Threshold,
   Vote,
+  VoteListResponse,
   VoteResponse,
-} from '@dao-dao/types/contracts/DaoProposalSingle.common'
-import {
-  ConfigResponse,
-  DaoResponse,
-  InfoResponse,
-  ListProposalsResponse,
-  PreProposeInfo,
-  ProposalCountResponse,
-  ProposalCreationPolicyResponse,
-  ProposalHooksResponse,
-  ProposalResponse,
-  ReverseProposalsResponse,
-  VoteHooksResponse,
 } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoProposalSingleV2ReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<ConfigResponse>
+  config: () => Promise<Config>
   proposal: ({
     proposalId,
   }: {
@@ -45,15 +40,15 @@ export interface DaoProposalSingleV2ReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: number
-  }) => Promise<ListProposalsResponse>
+  }) => Promise<ProposalListResponse>
   reverseProposals: ({
     limit,
     startBefore,
   }: {
     limit?: number
     startBefore?: number
-  }) => Promise<ReverseProposalsResponse>
-  proposalCount: () => Promise<ProposalCountResponse>
+  }) => Promise<ProposalListResponse>
+  proposalCount: () => Promise<number>
   getVote: ({
     proposalId,
     voter,
@@ -69,11 +64,11 @@ export interface DaoProposalSingleV2ReadOnlyInterface {
     limit?: number
     proposalId: number
     startAfter?: string
-  }) => Promise<ListVotesResponse>
-  proposalCreationPolicy: () => Promise<ProposalCreationPolicyResponse>
-  proposalHooks: () => Promise<ProposalHooksResponse>
-  voteHooks: () => Promise<VoteHooksResponse>
-  dao: () => Promise<DaoResponse>
+  }) => Promise<VoteListResponse>
+  proposalCreationPolicy: () => Promise<ProposalCreationPolicy>
+  proposalHooks: () => Promise<HooksResponse>
+  voteHooks: () => Promise<HooksResponse>
+  dao: () => Promise<SecretAnyContractInfo>
   info: () => Promise<InfoResponse>
 }
 export class DaoProposalSingleV2QueryClient
@@ -99,7 +94,7 @@ export class DaoProposalSingleV2QueryClient
     this.info = this.info.bind(this)
   }
 
-  config = async (): Promise<ConfigResponse> => {
+  config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -121,7 +116,7 @@ export class DaoProposalSingleV2QueryClient
   }: {
     limit?: number
     startAfter?: number
-  }): Promise<ListProposalsResponse> => {
+  }): Promise<ProposalListResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_proposals: {
         limit,
@@ -135,7 +130,7 @@ export class DaoProposalSingleV2QueryClient
   }: {
     limit?: number
     startBefore?: number
-  }): Promise<ReverseProposalsResponse> => {
+  }): Promise<ProposalListResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       reverse_proposals: {
         limit,
@@ -143,7 +138,7 @@ export class DaoProposalSingleV2QueryClient
       },
     })
   }
-  proposalCount = async (): Promise<ProposalCountResponse> => {
+  proposalCount = async (): Promise<number> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_count: {},
     })
@@ -170,7 +165,7 @@ export class DaoProposalSingleV2QueryClient
     limit?: number
     proposalId: number
     startAfter?: string
-  }): Promise<ListVotesResponse> => {
+  }): Promise<VoteListResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_votes: {
         limit,
@@ -179,23 +174,22 @@ export class DaoProposalSingleV2QueryClient
       },
     })
   }
-  proposalCreationPolicy =
-    async (): Promise<ProposalCreationPolicyResponse> => {
-      return this.client.queryContractSmart(this.contractAddress, {
-        proposal_creation_policy: {},
-      })
-    }
-  proposalHooks = async (): Promise<ProposalHooksResponse> => {
+  proposalCreationPolicy = async (): Promise<ProposalCreationPolicy> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      proposal_creation_policy: {},
+    })
+  }
+  proposalHooks = async (): Promise<HooksResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_hooks: {},
     })
   }
-  voteHooks = async (): Promise<VoteHooksResponse> => {
+  voteHooks = async (): Promise<HooksResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       vote_hooks: {},
     })
   }
-  dao = async (): Promise<DaoResponse> => {
+  dao = async (): Promise<SecretAnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       dao: {},
     })

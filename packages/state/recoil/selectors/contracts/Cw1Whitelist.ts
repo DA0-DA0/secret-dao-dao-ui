@@ -7,7 +7,6 @@ import { ContractName } from '@dao-dao/utils'
 import { Cw1WhitelistQueryClient } from '../../../contracts/Cw1Whitelist'
 import { cosmWasmClientForChainSelector } from '../chain'
 import { isContractSelector } from '../contract'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -37,17 +36,6 @@ export const adminListSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const adminList = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cw1Whitelist/adminList',
-        })
-      )
-      if (adminList) {
-        return adminList
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.adminList(...params)
     },

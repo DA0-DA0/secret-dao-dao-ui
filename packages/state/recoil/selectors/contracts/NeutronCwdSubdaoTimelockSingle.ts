@@ -11,7 +11,6 @@ import {
 import { NeutronCwdSubdaoTimelockSingleQueryClient } from '../../../contracts/NeutronCwdSubdaoTimelockSingle'
 import { refreshProposalIdAtom, refreshProposalsIdAtom } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -44,17 +43,6 @@ export const configSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const config = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'neutron/cwdSubdaoTimelockSingle/config',
-        })
-      )
-      if (config) {
-        return config
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.config(...params)
     },
@@ -69,30 +57,14 @@ export const proposalSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshProposalsIdAtom) +
-        get(
-          refreshProposalIdAtom({
-            address: queryClientParams.contractAddress,
-            proposalId: params[0].proposalId,
-          })
-        )
-
-      const proposal = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'neutron/cwdSubdaoTimelockSingle/proposal',
-          args: {
-            id: params[0].proposalId,
-          },
-          id,
+      get(refreshProposalsIdAtom)
+      get(
+        refreshProposalIdAtom({
+          address: queryClientParams.contractAddress,
+          proposalId: params[0].proposalId,
         })
       )
-      if (proposal) {
-        return proposal
-      }
 
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.proposal(...params)
     },
@@ -109,21 +81,8 @@ export const listProposalsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshProposalsIdAtom)
+      get(refreshProposalsIdAtom)
 
-      const proposals = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'neutron/cwdSubdaoTimelockSingle/listProposals',
-          args: params[0],
-          id,
-        })
-      )
-      if (proposals) {
-        return { proposals }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listProposals(...params)
     },
@@ -140,30 +99,14 @@ export const proposalExecutionErrorSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id =
-        get(refreshProposalsIdAtom) +
-        get(
-          refreshProposalIdAtom({
-            address: queryClientParams.contractAddress,
-            proposalId: params[0].proposalId,
-          })
-        )
-
-      const proposal = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'neutron/cwdSubdaoTimelockSingle/proposalExecutionError',
-          args: {
-            id: params[0].proposalId,
-          },
-          id,
+      get(refreshProposalsIdAtom)
+      get(
+        refreshProposalIdAtom({
+          address: queryClientParams.contractAddress,
+          proposalId: params[0].proposalId,
         })
       )
-      if (proposal) {
-        return proposal
-      }
 
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.proposalExecutionError(...params)
     },

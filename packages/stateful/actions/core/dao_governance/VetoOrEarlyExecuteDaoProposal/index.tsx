@@ -346,7 +346,7 @@ export const makeVetoOrEarlyExecuteDaoProposalAction: ActionMaker<
       match: true,
       data: {
         chainId,
-        coreAddress: daoLoading.data,
+        coreAddress: daoLoading.data.addr,
         proposalModuleAddress: msg.wasm.execute.contract_addr,
         proposalId,
         action: isVeto ? 'veto' : 'earlyExecute',

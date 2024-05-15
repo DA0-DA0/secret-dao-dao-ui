@@ -62,7 +62,7 @@ export const useProposalDaoInfoCards = (): DaoInfoCard[] => {
           denomOrAddress:
             'native' in depositInfo.data.denom
               ? depositInfo.data.denom.native
-              : depositInfo.data.denom.cw20,
+              : depositInfo.data.denom.snip20[0],
         })
       : constSelector(undefined)
   )

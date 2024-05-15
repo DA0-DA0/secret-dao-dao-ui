@@ -1,7 +1,7 @@
 import { ComponentType } from 'react'
 
 import { ActionKeyAndData } from './actions'
-import { Threshold } from './contracts/DaoProposalSingle.common'
+import { Threshold } from './contracts/DaoProposalSingle.v2'
 
 /**
  * The type of account given whatever the relevant context is.

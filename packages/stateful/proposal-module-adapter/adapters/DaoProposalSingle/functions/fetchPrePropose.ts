@@ -1,7 +1,6 @@
 import {
   DaoProposalSingleV2QueryClient,
   fetchPreProposeModule,
-  queryIndexer,
 } from '@dao-dao/state'
 import { Feature, FetchPreProposeFunction } from '@dao-dao/types'
 import {
@@ -18,36 +17,15 @@ export const fetchPrePropose: FetchPreProposeFunction = async (
     return null
   }
 
-  // Try indexer first.
-  let creationPolicy
-  try {
-    creationPolicy = await queryIndexer({
-      type: 'contract',
-      address: proposalModuleAddress,
-      formula: 'daoProposalSingle/creationPolicy',
-      chainId,
-    })
-  } catch (err) {
-    // Ignore error.
-    console.error(err)
-  }
+  const client = new DaoProposalSingleV2QueryClient(
+    await getCosmWasmClientForChainId(chainId),
+    proposalModuleAddress
+  )
 
-  // If indexer fails, fallback to querying chain.
-  if (!creationPolicy) {
-    const client = new DaoProposalSingleV2QueryClient(
-      await getCosmWasmClientForChainId(chainId),
-      proposalModuleAddress
-    )
-
-    creationPolicy = await client.proposalCreationPolicy()
-  }
+  const creationPolicy = await client.proposalCreationPolicy()
 
   const preProposeAddress =
-    creationPolicy && 'Module' in creationPolicy && creationPolicy.Module.addr
-      ? creationPolicy.Module.addr
-      : creationPolicy &&
-        'module' in creationPolicy &&
-        creationPolicy.module.addr
+    creationPolicy && 'module' in creationPolicy && creationPolicy.module.addr
       ? creationPolicy.module.addr
       : null
 

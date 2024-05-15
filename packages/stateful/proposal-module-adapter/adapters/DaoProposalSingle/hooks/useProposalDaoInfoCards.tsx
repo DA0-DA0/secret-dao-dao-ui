@@ -3,7 +3,7 @@ import { constSelector } from 'recoil'
 
 import {
   Cw1WhitelistSelectors,
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   genericTokenSelector,
 } from '@dao-dao/state'
 import {
@@ -38,7 +38,7 @@ export const useProposalDaoInfoCards = (): DaoInfoCard[] => {
   } = useProposalModuleAdapterCommonContext()
 
   const config = useCachedLoadingWithError(
-    DaoProposalSingleCommonSelectors.configSelector({
+    DaoProposalSingleV2Selectors.configSelector({
       chainId,
       contractAddress: proposalModule.address,
     })
@@ -63,7 +63,7 @@ export const useProposalDaoInfoCards = (): DaoInfoCard[] => {
           denomOrAddress:
             'native' in depositInfo.data.denom
               ? depositInfo.data.denom.native
-              : depositInfo.data.denom.cw20,
+              : depositInfo.data.denom.snip20[0],
         })
       : constSelector(undefined)
   )

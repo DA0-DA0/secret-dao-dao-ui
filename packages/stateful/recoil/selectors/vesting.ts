@@ -8,7 +8,6 @@ import {
   genericTokenSelector,
   isContractSelector,
   nativeDelegationInfoSelector,
-  queryWalletIndexerSelector,
   refreshVestingAtom,
   validatorSlashesSelector,
 } from '@dao-dao/state/recoil'
@@ -32,18 +31,21 @@ export const vestingPaymentsOwnedBySelector = selectorFamily<
   get:
     ({ chainId, address }) =>
     ({ get }) => {
-      const vestingPayments: string[] = get(
-        queryWalletIndexerSelector({
-          chainId,
-          walletAddress: address,
-          formula: 'vesting/ownerOf',
-          noFallback: true,
-        })
-      )
+      // No indexer on Secret Network.
+      return []
 
-      return vestingPayments && Array.isArray(vestingPayments)
-        ? vestingPayments
-        : []
+      // const vestingPayments: string[] = get(
+      //   queryWalletIndexerSelector({
+      //     chainId,
+      //     walletAddress: address,
+      //     formula: 'vesting/ownerOf',
+      //     noFallback: true,
+      //   })
+      // )
+
+      // return vestingPayments && Array.isArray(vestingPayments)
+      //   ? vestingPayments
+      //   : []
     },
 })
 

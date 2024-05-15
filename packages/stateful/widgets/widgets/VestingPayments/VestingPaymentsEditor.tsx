@@ -189,11 +189,11 @@ const VestingFactoryChain = ({
       const createdFactoryAddress = await instantiateSmartContract(
         getSigningClient,
         walletAddress,
-        codeIds.CwPayrollFactory,
+        codeIds.CwPayrollFactory.codeId,
         `DAO_${name}_VestingFactory-v${LATEST_VESTING_CONTRACT_VERSION}_${chainId}`,
         {
           owner: daoChainAccountAddress,
-          vesting_code_id: codeIds.CwVesting,
+          vesting_code_id: codeIds.CwVesting.codeId,
         } as VestingFactoryInstantiateMsg
       )
 

@@ -3,7 +3,6 @@ import { selectorFamily } from 'recoil'
 import {
   cosmWasmClientForChainSelector,
   isContractSelector,
-  queryContractIndexerSelector,
 } from '@dao-dao/state'
 import { ProposalModuleAdapter, WithChainId } from '@dao-dao/types'
 
@@ -43,25 +42,6 @@ export const proposalModuleAdapterProposalCountSelector = selectorFamily<
         return
       }
 
-      let count: number | undefined
-      if (adapter.queries.proposalCount.indexerFormula) {
-        count =
-          get(
-            queryContractIndexerSelector({
-              contractAddress: params.proposalModuleAddress,
-              chainId: params.chainId,
-              formula: adapter.queries.proposalCount.indexerFormula,
-            })
-            // Null when indexer fails.
-          ) ?? undefined
-
-        if (typeof count === 'number') {
-          return count
-        }
-      }
-
-      // If indexer formula does not exist or fails to load, fallback to
-      // querying the chain.
       const client = get(cosmWasmClientForChainSelector(params.chainId))
       try {
         return await client.queryContractSmart(

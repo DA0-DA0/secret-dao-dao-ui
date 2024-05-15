@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useRecoilValue } from 'recoil'
 
-import { DaoProposalSingleCommonSelectors } from '@dao-dao/state'
+import { DaoProposalSingleV2Selectors } from '@dao-dao/state'
 import {
   ProposalCrossChainRelayStatus,
   ProposalStatusAndInfoProps,
@@ -78,7 +78,7 @@ export const useProposalActionState = ({
   })
 
   const config = useRecoilValue(
-    DaoProposalSingleCommonSelectors.configSelector({
+    DaoProposalSingleV2Selectors.configSelector({
       chainId,
       contractAddress: proposalModule.address,
     })

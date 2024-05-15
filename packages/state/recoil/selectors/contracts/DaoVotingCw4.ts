@@ -2,7 +2,7 @@ import { selectorFamily } from 'recoil'
 
 import { WithChainId } from '@dao-dao/types'
 import {
-  DaoResponse,
+  AnyContractInfo,
   TotalPowerAtHeightResponse,
   VotingPowerAtHeightResponse,
 } from '@dao-dao/types/contracts/DaoVotingCw4'
@@ -11,7 +11,6 @@ import { extractAddressFromMaybeSecretContractInfo } from '@dao-dao/utils'
 import { DaoVotingCw4QueryClient } from '../../../contracts/DaoVotingCw4'
 import { cosmWasmClientForChainSelector } from '../chain'
 import { contractInfoSelector } from '../contract'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -41,17 +40,6 @@ export const groupContractSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const groupContract = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingCw4/groupContract',
-        })
-      )
-      if (groupContract && typeof groupContract === 'string') {
-        return groupContract
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return extractAddressFromMaybeSecretContractInfo(
         await client.groupContract(...params)
@@ -59,7 +47,7 @@ export const groupContractSelector = selectorFamily<
     },
 })
 export const daoSelector = selectorFamily<
-  DaoResponse,
+  AnyContractInfo,
   QueryClientParams & {
     params: Parameters<DaoVotingCw4QueryClient['dao']>
   }
@@ -68,17 +56,6 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingCw4/dao',
-        })
-      )
-      if (dao) {
-        return dao
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.dao(...params)
     },
@@ -93,24 +70,6 @@ export const votingPowerAtHeightSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const votingPower = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingCw4/votingPower',
-          args: {
-            address: params[0].address,
-          },
-          block: params[0].height ? { height: params[0].height } : undefined,
-        })
-      )
-      if (votingPower && !isNaN(votingPower)) {
-        return {
-          power: votingPower,
-          height: params[0].height,
-        }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.votingPowerAtHeight(...params)
     },
@@ -125,21 +84,6 @@ export const totalPowerAtHeightSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const totalPower = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'daoVotingCw4/totalPower',
-          block: params[0].height ? { height: params[0].height } : undefined,
-        })
-      )
-      if (totalPower && !isNaN(totalPower)) {
-        return {
-          power: totalPower,
-          height: params[0].height,
-        }
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.totalPowerAtHeight(...params)
     },

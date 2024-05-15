@@ -7,11 +7,10 @@ import {
 
 import { Coin, Empty } from '@dao-dao/types/contracts/common'
 import {
-  ConfigResponse,
-  DaoResponse,
+  AnyContractInfo,
+  Binary,
+  Config,
   DepositInfoResponse,
-  ExtensionResponse,
-  ProposalModuleResponse,
   ProposeMessage,
   Status,
   UncheckedDenom,
@@ -21,15 +20,15 @@ import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoPreProposeSingleReadOnlyInterface {
   contractAddress: string
-  proposalModule: () => Promise<ProposalModuleResponse>
-  dao: () => Promise<DaoResponse>
-  config: () => Promise<ConfigResponse>
+  proposalModule: () => Promise<AnyContractInfo>
+  dao: () => Promise<AnyContractInfo>
+  config: () => Promise<Config>
   depositInfo: ({
     proposalId,
   }: {
     proposalId: number
   }) => Promise<DepositInfoResponse>
-  queryExtension: ({ msg }: { msg: Empty }) => Promise<ExtensionResponse>
+  queryExtension: ({ msg }: { msg: Empty }) => Promise<Binary>
 }
 export class DaoPreProposeSingleQueryClient
   implements DaoPreProposeSingleReadOnlyInterface
@@ -47,17 +46,17 @@ export class DaoPreProposeSingleQueryClient
     this.queryExtension = this.queryExtension.bind(this)
   }
 
-  proposalModule = async (): Promise<ProposalModuleResponse> => {
+  proposalModule = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_module: {},
     })
   }
-  dao = async (): Promise<DaoResponse> => {
+  dao = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       dao: {},
     })
   }
-  config = async (): Promise<ConfigResponse> => {
+  config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -73,11 +72,7 @@ export class DaoPreProposeSingleQueryClient
       },
     })
   }
-  queryExtension = async ({
-    msg,
-  }: {
-    msg: Empty
-  }): Promise<ExtensionResponse> => {
+  queryExtension = async ({ msg }: { msg: Empty }): Promise<Binary> => {
     return this.client.queryContractSmart(this.contractAddress, {
       extension: {
         msg,

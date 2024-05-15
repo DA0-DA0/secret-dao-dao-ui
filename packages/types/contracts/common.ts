@@ -49,6 +49,9 @@ export type CosmosMsgFor_Empty =
   | {
       gov: GovMsg
     }
+  | {
+      finalize_tx: Empty
+    }
   | StargateMsg
 export type CosmosMsgForEmpty = CosmosMsgFor_Empty
 
@@ -132,73 +135,31 @@ export type StargateMsg = {
     value: Binary
   }
 }
-/**
- * The message types of the wasm module.
- *
- * See https://github.com/CosmWasm/wasmd/blob/v0.29.0/x/wasm/types/tx.pb.go
- */
 export type WasmMsg =
   | {
       execute: {
+        code_hash: string
         contract_addr: string
-        funds: Coin[]
-        /**
-         * msg is the json-encoded ExecuteMsg struct (as raw Binary)
-         */
         msg: Binary
+        send: Coin[]
       }
     }
   | {
       instantiate: {
         admin?: string | null
+        code_hash: string
         code_id: number
-        funds: Coin[]
-        /**
-         * A human-readbale label for the contract
-         */
         label: string
-        /**
-         * msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
-         */
         msg: Binary
-      }
-    }
-  | {
-      instantiate2: {
-        admin?: string | null
-        code_id: number
-        funds: Coin[]
-        /**
-         * A human-readable label for the contract
-         */
-        label: string
-        /**
-         * msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
-         */
-        msg: Binary
-        /**
-         * Salt is an arbitrary value provided by the sender. Size can be 1 to
-         * 64.
-         */
-        salt: Binary
-        /**
-         * FixMsg include the msg value into the hash for the predictable
-         * address. Default is false.
-         */
-        fix_msg: boolean
+        send: Coin[]
       }
     }
   | {
       migrate: {
+        code_hash: string
+        code_id: number
         contract_addr: string
-        /**
-         * msg is the json-encoded MigrateMsg struct that will be passed to the new code
-         */
         msg: Binary
-        /**
-         * the code_id of the new logic to place in the given contract
-         */
-        new_code_id: number
       }
     }
   | {
@@ -226,6 +187,7 @@ export type IbcMsg =
       transfer: {
         amount: Coin
         channel_id: string
+        memo: string
         timeout: IbcTimeout
         to_address: string
       }
@@ -254,14 +216,13 @@ export type Admin =
       core_module: {}
     }
 
-// Added in V2
 export type ModuleInstantiateInfo = {
   admin?: Admin | null
+  code_hash: string
   code_id: number
+  funds: Coin[]
   label: string
   msg: Binary
-  // Added in V2.3. Make optional for backwards compatibility.
-  funds?: Coin[]
 }
 
 export interface ContractVersionInfo {
@@ -278,7 +239,7 @@ export type CheckedDenom =
       native: string
     }
   | {
-      cw20: Addr
+      snip20: [Addr, string]
     }
 export enum DepositRefundPolicy {
   Always = 'always',
@@ -289,13 +250,6 @@ export interface CheckedDepositInfo {
   amount: Uint128
   denom: CheckedDenom
   refund_policy: DepositRefundPolicy
-}
-
-export interface MintMsg {
-  mint: {
-    amount: Uint128
-    recipient: string
-  }
 }
 
 /**

@@ -1,14 +1,6 @@
-import { selectorFamily, waitForAll } from 'recoil'
+import { selectorFamily } from 'recoil'
 
-import { GenericTokenBalance, TokenType, WithChainId } from '@dao-dao/types'
-import { DAO_VOTING_TOKEN_STAKED_CONTRACT_NAMES } from '@dao-dao/utils'
-
-import { refreshWalletBalancesIdAtom } from '../atoms'
-import { isContractSelector } from './contract'
-import { votingModuleSelector } from './contracts/DaoCore.v2'
-import * as DaoVotingTokenStaked from './contracts/DaoVotingTokenStaked'
-import { queryWalletIndexerSelector } from './indexer'
-import { genericTokenSelector } from './token'
+import { GenericTokenBalance, WithChainId } from '@dao-dao/types'
 
 type ContractWithBalance = {
   contractAddress: string
@@ -24,35 +16,38 @@ export const walletCw20BalancesSelector = selectorFamily<
   get:
     ({ walletAddress, chainId }) =>
     ({ get }) => {
-      const id = get(refreshWalletBalancesIdAtom(walletAddress))
+      // No indexer on Secret Network.
+      return []
 
-      const cw20Contracts: ContractWithBalance[] =
-        get(
-          queryWalletIndexerSelector({
-            chainId,
-            walletAddress,
-            formula: 'tokens/list',
-            id,
-            noFallback: true,
-          })
-        ) ?? []
+      // const id = get(refreshWalletBalancesIdAtom(walletAddress))
 
-      const tokens = get(
-        waitForAll(
-          cw20Contracts.map(({ contractAddress }) =>
-            genericTokenSelector({
-              type: TokenType.Cw20,
-              denomOrAddress: contractAddress,
-              chainId,
-            })
-          )
-        )
-      )
+      // const cw20Contracts: ContractWithBalance[] =
+      //   get(
+      //     queryWalletIndexerSelector({
+      //       chainId,
+      //       walletAddress,
+      //       formula: 'tokens/list',
+      //       id,
+      //       noFallback: true,
+      //     })
+      //   ) ?? []
 
-      return tokens.map((token, index) => ({
-        token,
-        balance: cw20Contracts[index].balance,
-      }))
+      // const tokens = get(
+      //   waitForAll(
+      //     cw20Contracts.map(({ contractAddress }) =>
+      //       genericTokenSelector({
+      //         type: TokenType.Cw20,
+      //         denomOrAddress: contractAddress,
+      //         chainId,
+      //       })
+      //     )
+      //   )
+      // )
+
+      // return tokens.map((token, index) => ({
+      //   token,
+      //   balance: cw20Contracts[index].balance,
+      // }))
     },
 })
 
@@ -64,61 +59,64 @@ export const walletTokenDaoStakedDenomsSelector = selectorFamily<
   get:
     ({ walletAddress, chainId }) =>
     ({ get }) => {
-      // Get the DAOs that the wallet is a member of
-      const daos = get(
-        queryWalletIndexerSelector({
-          chainId,
-          walletAddress,
-          formula: 'daos/memberOf',
-          noFallback: true,
-        })
-      )
-      if (!daos || !Array.isArray(daos) || daos.length === 0) {
-        return []
-      }
+      // No indexer on Secret Network.
+      return []
 
-      // Get the token staked voting modules for each DAO
-      const votingModules = get(
-        waitForAll(
-          daos.map(({ dao: contractAddress }) =>
-            votingModuleSelector({
-              contractAddress,
-              chainId,
-              params: [],
-            })
-          )
-        )
-      ).filter((contractAddress) =>
-        get(
-          isContractSelector({
-            contractAddress,
-            chainId,
-            names: DAO_VOTING_TOKEN_STAKED_CONTRACT_NAMES,
-          })
-        )
-      )
+      // // Get the DAOs that the wallet is a member of
+      // const daos = get(
+      //   queryWalletIndexerSelector({
+      //     chainId,
+      //     walletAddress,
+      //     formula: 'daos/memberOf',
+      //     noFallback: true,
+      //   })
+      // )
+      // if (!daos || !Array.isArray(daos) || daos.length === 0) {
+      //   return []
+      // }
 
-      if (votingModules.length === 0) {
-        return []
-      }
+      // // Get the token staked voting modules for each DAO
+      // const votingModules = get(
+      //   waitForAll(
+      //     daos.map(({ dao: contractAddress }) =>
+      //       votingModuleSelector({
+      //         contractAddress,
+      //         chainId,
+      //         params: [],
+      //       })
+      //     )
+      //   )
+      // ).filter((contractAddress) =>
+      //   get(
+      //     isContractSelector({
+      //       contractAddress,
+      //       chainId,
+      //       names: DAO_VOTING_TOKEN_STAKED_CONTRACT_NAMES,
+      //     })
+      //   )
+      // )
 
-      // Get a list of denoms from the voting modules
-      const denoms = get(
-        waitForAll(
-          votingModules.map((contractAddress) =>
-            DaoVotingTokenStaked.denomSelector({
-              contractAddress,
-              chainId,
-              params: [],
-            })
-          )
-        )
-      )
+      // if (votingModules.length === 0) {
+      //   return []
+      // }
 
-      // Create a Set from the denoms to ensure uniqueness
-      const uniqueDenoms = new Set(denoms.map(({ denom }) => denom))
+      // // Get a list of denoms from the voting modules
+      // const denoms = get(
+      //   waitForAll(
+      //     votingModules.map((contractAddress) =>
+      //       DaoVotingTokenStaked.denomSelector({
+      //         contractAddress,
+      //         chainId,
+      //         params: [],
+      //       })
+      //     )
+      //   )
+      // )
 
-      // Convert the Set back into an array to return
-      return [...uniqueDenoms]
+      // // Create a Set from the denoms to ensure uniqueness
+      // const uniqueDenoms = new Set(denoms.map(({ denom }) => denom))
+
+      // // Convert the Set back into an array to return
+      // return [...uniqueDenoms]
     },
 })

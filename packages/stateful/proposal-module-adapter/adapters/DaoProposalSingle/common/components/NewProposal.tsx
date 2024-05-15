@@ -7,7 +7,7 @@ import { useRecoilCallback, useRecoilValueLoadable } from 'recoil'
 
 import {
   DaoCoreV2Selectors,
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   blocksPerYearSelector,
 } from '@dao-dao/state'
 import {
@@ -156,7 +156,7 @@ export const NewProposal = ({
             )
 
           const config = await snapshot.getPromise(
-            DaoProposalSingleCommonSelectors.configSelector({
+            DaoProposalSingleV2Selectors.configSelector({
               chainId,
               contractAddress: options.proposalModule.address,
             })

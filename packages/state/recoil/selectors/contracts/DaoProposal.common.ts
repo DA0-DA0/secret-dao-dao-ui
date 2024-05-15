@@ -5,7 +5,7 @@ import {
   DaoProposalSingleV2Selectors,
   contractInfoSelector,
 } from '@dao-dao/state'
-import { WithChainId } from '@dao-dao/types'
+import { SecretAnyContractInfo, WithChainId } from '@dao-dao/types'
 import { ProposalResponse as DaoProposalMultipleProposalResponse } from '@dao-dao/types/contracts/DaoProposalMultiple'
 import { ProposalResponse as DaoProposalSingleProposalResponse } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
@@ -17,7 +17,10 @@ type QueryClientParams = WithChainId<{
   contractAddress: string
 }>
 
-export const daoSelector = selectorFamily<string, QueryClientParams>({
+export const daoSelector = selectorFamily<
+  SecretAnyContractInfo,
+  QueryClientParams
+>({
   key: 'daoProposalCommonDao',
   get:
     (queryClientParams) =>

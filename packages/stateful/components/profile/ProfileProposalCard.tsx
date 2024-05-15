@@ -72,8 +72,8 @@ export const ProfileProposalCard = () => {
             .filter(
               (depositInfo): depositInfo is CheckedDepositInfo =>
                 !!depositInfo &&
-                ('cw20' in depositInfo.denom
-                  ? depositInfo.denom.cw20
+                ('snip20' in depositInfo.denom
+                  ? depositInfo.denom.snip20[0]
                   : depositInfo.denom.native) === governanceDenomOrAddress
             )
             .map(({ amount }) => Number(amount)),

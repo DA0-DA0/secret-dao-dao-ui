@@ -365,8 +365,10 @@ export const InnerCreateDaoForm = ({
     instantiateMsg = {
       // If parentDao exists, let's make a subDAO :D
       admin: parentDao?.coreAddress ?? null,
-      automatically_add_cw20s: true,
-      automatically_add_cw721s: true,
+      snip20_code_hash: '',
+      snip721_code_hash: '',
+      automatically_add_snip20s: false,
+      automatically_add_snip721s: false,
       description,
       image_url: imageUrl ?? null,
       name: name.trim(),
@@ -374,6 +376,7 @@ export const InnerCreateDaoForm = ({
       // Placeholder. Should be replaced by creator's mutate function.
       voting_module_instantiate_info: {
         code_id: -1,
+        code_hash: '',
         funds: [],
         label: '',
         msg: '',

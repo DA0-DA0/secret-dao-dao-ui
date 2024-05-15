@@ -5,10 +5,8 @@ import {
   useDaoInfoContext,
   useDaoNavHelpers,
 } from '@dao-dao/stateless'
-import { ActionKey, Feature } from '@dao-dao/types'
-import { getDaoProposalSinglePrefill } from '@dao-dao/utils'
+import { Feature } from '@dao-dao/types'
 
-import { useActionForKey } from '../../../actions'
 import { useMembership } from '../../../hooks'
 import { subDaoCardInfosSelector } from '../../../recoil'
 import { ButtonLink } from '../../ButtonLink'
@@ -17,7 +15,7 @@ import { DaoCard } from '../DaoCard'
 export const SubDaosTab = () => {
   const { chain_id: chainId } = useChain()
   const daoInfo = useDaoInfoContext()
-  const { getDaoPath, getDaoProposalPath } = useDaoNavHelpers()
+  const { getDaoPath } = useDaoNavHelpers()
 
   const { isMember = false } = useMembership(daoInfo)
 
@@ -30,9 +28,6 @@ export const SubDaosTab = () => {
     []
   )
 
-  const upgradeToV2Action = useActionForKey(ActionKey.UpgradeV1ToV2)
-  const upgradeToV2ActionDefaults = upgradeToV2Action?.useDefaults()
-
   return (
     <StatelessSubDaosTab
       ButtonLink={ButtonLink}
@@ -40,18 +35,6 @@ export const SubDaosTab = () => {
       createSubDaoHref={getDaoPath(daoInfo.coreAddress, 'create')}
       isMember={isMember}
       subDaos={subDaos}
-      upgradeToV2Href={getDaoProposalPath(daoInfo.coreAddress, 'create', {
-        prefill: getDaoProposalSinglePrefill({
-          actions: upgradeToV2Action
-            ? [
-                {
-                  actionKey: upgradeToV2Action.key,
-                  data: upgradeToV2ActionDefaults,
-                },
-              ]
-            : [],
-        }),
-      })}
     />
   )
 }

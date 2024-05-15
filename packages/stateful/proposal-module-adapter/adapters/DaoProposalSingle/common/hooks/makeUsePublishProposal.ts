@@ -14,7 +14,6 @@ import {
   refreshWalletBalancesIdAtom,
 } from '@dao-dao/state'
 import { useCachedLoadable } from '@dao-dao/stateless'
-import { ContractVersion } from '@dao-dao/types'
 import {
   CHAIN_GAS_MULTIPLIER,
   ContractName,
@@ -25,7 +24,6 @@ import {
 
 import {
   Cw20BaseHooks,
-  CwProposalSingleV1Hooks,
   DaoPreProposeSingleHooks,
   DaoProposalSingleV2Hooks,
   useAwaitNextBlock,
@@ -73,8 +71,8 @@ export const makeUsePublishProposal =
     const depositInfoCw20TokenAddress =
       depositInfo.state === 'hasValue' &&
       depositInfo.contents?.denom &&
-      'cw20' in depositInfo.contents.denom
-        ? depositInfo.contents.denom.cw20
+      'snip20' in depositInfo.contents.denom
+        ? depositInfo.contents.denom.snip20[0]
         : undefined
     const depositInfoNativeTokenDenom =
       depositInfo.state === 'hasValue' &&
@@ -163,11 +161,7 @@ export const makeUsePublishProposal =
       contractAddress: depositInfoCw20TokenAddress ?? '',
       sender: walletAddress ?? '',
     })
-    const doProposeV1 = CwProposalSingleV1Hooks.usePropose({
-      contractAddress: proposalModule.address,
-      sender: walletAddress ?? '',
-    })
-    const doProposeV2 = DaoProposalSingleV2Hooks.usePropose({
+    const doPropose = DaoProposalSingleV2Hooks.usePropose({
       contractAddress: proposalModule.address,
       sender: walletAddress ?? '',
     })
@@ -321,39 +315,26 @@ export const makeUsePublishProposal =
           msgs,
         }
 
-        let response
-        let isPreProposeApprovalProposal = false
-        // V1 does not support pre-propose
-        if (proposalModule.version === ContractVersion.V1) {
-          response = await doProposeV1(
-            proposalData,
-            CHAIN_GAS_MULTIPLIER,
-            undefined,
-            proposeFunds
-          )
-          // Every other version supports pre-propose.
-        } else {
-          isPreProposeApprovalProposal =
-            proposalModule.prePropose?.contractName ===
-            ContractName.PreProposeApprovalSingle
-          response = proposalModule.prePropose
-            ? await doProposePrePropose(
-                {
-                  msg: {
-                    propose: proposalData,
-                  },
+        const isPreProposeApprovalProposal =
+          proposalModule.prePropose?.contractName ===
+          ContractName.PreProposeApprovalSingle
+        const response = proposalModule.prePropose
+          ? await doProposePrePropose(
+              {
+                msg: {
+                  propose: proposalData,
                 },
-                CHAIN_GAS_MULTIPLIER,
-                undefined,
-                proposeFunds
-              )
-            : await doProposeV2(
-                proposalData,
-                CHAIN_GAS_MULTIPLIER,
-                undefined,
-                proposeFunds
-              )
-        }
+              },
+              CHAIN_GAS_MULTIPLIER,
+              undefined,
+              proposeFunds
+            )
+          : await doPropose(
+              proposalData,
+              CHAIN_GAS_MULTIPLIER,
+              undefined,
+              proposeFunds
+            )
 
         if (proposeFunds?.length) {
           refreshBalances()
@@ -401,9 +382,8 @@ export const makeUsePublishProposal =
         increaseCw20DepositAllowance,
         awaitNextBlock,
         refreshBalances,
-        doProposeV1,
         doProposePrePropose,
-        doProposeV2,
+        doPropose,
       ]
     )
 

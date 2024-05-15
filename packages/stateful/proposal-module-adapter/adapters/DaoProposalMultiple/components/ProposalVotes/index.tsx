@@ -41,13 +41,12 @@ export const ProposalVotes = () => {
     (data) =>
       data
         .map(
-          ({ vote, voter, power, rationale, votedAt }): ProposalVote => ({
+          ({ vote, voter, power, rationale }): ProposalVote => ({
             voterAddress: voter,
             vote,
             votingPowerPercent:
               totalPower === 0 ? 0 : (Number(power) / totalPower) * 100,
             rationale,
-            votedAt: votedAt ? new Date(votedAt) : undefined,
           })
         )
         // Sort most recent first.

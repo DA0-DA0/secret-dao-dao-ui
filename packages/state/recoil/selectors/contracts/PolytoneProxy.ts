@@ -4,7 +4,6 @@ import { Addr, WithChainId } from '@dao-dao/types'
 
 import { PolytoneProxyQueryClient } from '../../../contracts/PolytoneProxy'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -34,17 +33,6 @@ export const instantiatorSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const instantiator = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'polytone/proxy/instantiator',
-        })
-      )
-      if (instantiator) {
-        return instantiator
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.instantiator(...params)
     },
@@ -58,15 +46,17 @@ export const remoteControllerForPolytoneProxySelector = selectorFamily<
   get:
     ({ chainId, voice, proxy }) =>
     ({ get }) =>
-      get(
-        queryContractIndexerSelector({
-          chainId,
-          contractAddress: voice,
-          formula: 'polytone/voice/remoteController',
-          args: {
-            address: proxy,
-          },
-          noFallback: true,
-        })
-      ),
+      // No indexer on Secret Network.
+      undefined,
+  // get(
+  //   queryContractIndexerSelector({
+  //     chainId,
+  //     contractAddress: voice,
+  //     formula: 'polytone/voice/remoteController',
+  //     args: {
+  //       address: proxy,
+  //     },
+  //     noFallback: true,
+  //   })
+  // ),
 })

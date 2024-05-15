@@ -59,7 +59,10 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
                             }
                           : // proposalDeposit.type === 'cw20'
                             {
-                              cw20: proposalDeposit.denomOrAddress,
+                              snip20: [
+                                proposalDeposit.denomOrAddress,
+                                proposalDeposit.token?.snip20CodeHash || '',
+                              ],
                             },
                     },
                   },
@@ -68,6 +71,7 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
         : null,
       extension: {},
       open_proposal_submission: anyoneCanPropose,
+      proposal_module_code_hash: codeIds.DaoProposalMultiple.codeHash,
     }
 
   // Validate and throw error if invalid according to JSON schema.
@@ -94,15 +98,11 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
       module_may_propose: {
         info: {
           admin: { core_module: {} },
-          code_id: codeIdsToUse.DaoPreProposeMultiple,
+          code_id: codeIdsToUse.DaoPreProposeMultiple.codeId,
+          code_hash: codeIdsToUse.DaoPreProposeMultiple.codeHash,
           label: `DAO_${name.trim()}_pre-propose-${DaoProposalMultipleAdapterId}`,
           msg: encodeJsonToBase64(preProposeMultipleInstantiateMsg),
-          // This function is used by the enable multiple choice action, and
-          // DAOs before v2.3.0 still might want to enable multiple choice, so
-          // make sure to support the old version without the `funds` field.
-          ...(!moduleInstantiateFundsUnsupported && {
-            funds: [],
-          }),
+          funds: [],
         },
       },
     },
@@ -112,6 +112,9 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
       },
     },
     veto: convertVetoConfigToCosmos(veto),
+    dao_code_hash: codeIds.DaoCore.codeHash,
+    // TODO(secret): add query_auth
+    query_auth: {},
   }
 
   // Validate and throw error if invalid according to JSON schema.
@@ -119,14 +122,10 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
 
   return {
     admin: { core_module: {} },
-    code_id: codeIdsToUse.DaoProposalMultiple,
+    code_id: codeIdsToUse.DaoProposalMultiple.codeId,
+    code_hash: codeIdsToUse.DaoProposalMultiple.codeHash,
     label: `DAO_${name.trim()}_${DaoProposalMultipleAdapterId}`,
     msg: encodeJsonToBase64(msg),
-    // This function is used by the enable multiple choice action, and DAOs
-    // before v2.3.0 still might want to enable multiple choice, so make sure to
-    // support the old version without the `funds` field.
-    ...(!moduleInstantiateFundsUnsupported && {
-      funds: [],
-    }),
+    funds: [],
   }
 }

@@ -2,10 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
   "type": "object",
-  "required": ["group_contract"],
+  "required": ["dao_code_hash", "group_contract", "query_auth"],
   "properties": {
+    "dao_code_hash": {
+      "type": "string"
+    },
     "group_contract": {
       "$ref": "#/definitions/GroupContract"
+    },
+    "query_auth": {
+      "$ref": "#/definitions/RawContract"
     }
   },
   "additionalProperties": false,
@@ -18,9 +24,12 @@
           "properties": {
             "existing": {
               "type": "object",
-              "required": ["address"],
+              "required": ["address", "code_hash"],
               "properties": {
                 "address": {
+                  "type": "string"
+                },
+                "code_hash": {
                   "type": "string"
                 }
               },
@@ -35,8 +44,15 @@
           "properties": {
             "new": {
               "type": "object",
-              "required": ["cw4_group_code_id", "initial_members"],
+              "required": [
+                "cw4_group_code_hash",
+                "cw4_group_code_id",
+                "initial_members"
+              ],
               "properties": {
+                "cw4_group_code_hash": {
+                  "type": "string"
+                },
                 "cw4_group_code_id": {
                   "type": "integer",
                   "minimum": 0.0
@@ -66,6 +82,20 @@
         "weight": {
           "type": "integer",
           "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "RawContract": {
+      "description": "A contract that does not contain a validated address. Should be accepted as user input because we shouldn't assume addresses are verified Addrs. https://docs.rs/cosmwasm-std/latest/cosmwasm_std/struct.Addr.html",
+      "type": "object",
+      "required": ["address", "code_hash"],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "code_hash": {
+          "type": "string"
         }
       },
       "additionalProperties": false

@@ -10,7 +10,6 @@ import {
 } from '../../../contracts/CwPayrollFactory'
 import { refreshVestingAtom, signingCosmWasmClientAtom } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -61,21 +60,8 @@ export const _listVestingContractsSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const id = get(refreshVestingAtom(''))
+      get(refreshVestingAtom(''))
 
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContracts',
-          args: params[0],
-          id,
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContracts(...params)
     },
@@ -92,18 +78,6 @@ export const listVestingContractsReverseSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContractsReverse',
-          args: params[0],
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContractsReverse(...params)
     },
@@ -120,18 +94,6 @@ export const listVestingContractsByInstantiatorSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContractsByInstantiator',
-          args: params[0],
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContractsByInstantiator(...params)
     },
@@ -148,18 +110,6 @@ export const listVestingContractsByInstantiatorReverseSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContractsByInstantiatorReverse',
-          args: params[0],
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContractsByInstantiatorReverse(...params)
     },
@@ -176,18 +126,6 @@ export const listVestingContractsByRecipientSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContractsByRecipient',
-          args: params[0],
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContractsByRecipient(...params)
     },
@@ -204,18 +142,6 @@ export const listVestingContractsByRecipientReverseSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContractsByRecipientReverse',
-          args: params[0],
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.listVestingContractsByRecipientReverse(...params)
     },
@@ -230,17 +156,6 @@ export const ownershipSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const ownership = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/ownership',
-        })
-      )
-      if (ownership) {
-        return ownership
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.ownership(...params)
     },
@@ -255,17 +170,6 @@ export const codeIdSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const codeId = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/codeId',
-        })
-      )
-      if (codeId) {
-        return codeId
-      }
-
-      // If indexer query fails, fallback to contract query.
       const client = get(queryClient(queryClientParams))
       return await client.codeId(...params)
     },
@@ -280,20 +184,7 @@ export const allVestingContractsSelector = selectorFamily<
   get:
     (queryClientParams) =>
     async ({ get }) => {
-      const id = get(refreshVestingAtom(''))
-
-      const list = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'cwPayrollFactory/listVestingContracts',
-          id,
-        })
-      )
-      if (list) {
-        return list
-      }
-
-      // If indexer query fails, fallback to contract query.
+      get(refreshVestingAtom(''))
 
       const vestingContracts: ArrayOfVestingContract = []
       while (true) {

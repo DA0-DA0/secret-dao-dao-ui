@@ -1,23 +1,15 @@
-import {
-  RecoilValueReadOnly,
-  constSelector,
-  selectorFamily,
-  waitForAll,
-} from 'recoil'
+import { RecoilValueReadOnly, selectorFamily, waitForAll } from 'recoil'
 
 import {
-  CwProposalSingleV1Selectors,
   DaoPreProposeApprovalSingleSelectors,
   DaoPreProposeSingleSelectors,
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   blockHeightTimestampSafeSelector,
 } from '@dao-dao/state'
 import {
   CheckedDepositInfo,
   ContractVersion,
-  DepositRefundPolicy,
   Duration,
-  Feature,
   ProposalStatusEnum,
   WithChainId,
 } from '@dao-dao/types'
@@ -26,7 +18,6 @@ import {
   CommonProposalListInfo,
   DepositInfoSelector,
 } from '@dao-dao/types/proposal-module-adapter'
-import { isFeatureSupportedByVersion } from '@dao-dao/utils'
 
 export const proposalCountSelector = selectorFamily<
   number,
@@ -39,7 +30,7 @@ export const proposalCountSelector = selectorFamily<
     ({ chainId, proposalModuleAddress }) =>
     ({ get }) =>
       get(
-        DaoProposalSingleCommonSelectors.proposalCountSelector({
+        DaoProposalSingleV2Selectors.proposalCountSelector({
           contractAddress: proposalModuleAddress,
           chainId,
         })
@@ -57,7 +48,7 @@ export const maxVotingPeriodSelector = selectorFamily<
     ({ chainId, proposalModuleAddress }) =>
     ({ get }) => {
       const config = get(
-        DaoProposalSingleCommonSelectors.configSelector({
+        DaoProposalSingleV2Selectors.configSelector({
           contractAddress: proposalModuleAddress,
           chainId,
         })
@@ -86,7 +77,7 @@ export const reverseProposalInfosSelector: (
     }) =>
     async ({ get }) => {
       const proposalResponses = get(
-        DaoProposalSingleCommonSelectors.reverseProposalsSelector({
+        DaoProposalSingleV2Selectors.reverseProposalsSelector({
           contractAddress: proposalModuleAddress,
           chainId,
           params: [
@@ -100,15 +91,11 @@ export const reverseProposalInfosSelector: (
 
       const timestamps = get(
         waitForAll(
-          proposalResponses.map(({ proposal: { start_height }, ...response }) =>
-            // Indexer returns createdAt, so check its existence and fetch from
-            // chain if not present.
-            typeof response.createdAt === 'string'
-              ? constSelector(new Date(response.createdAt))
-              : blockHeightTimestampSafeSelector({
-                  blockHeight: start_height,
-                  chainId,
-                })
+          proposalResponses.map(({ proposal: { start_height } }) =>
+            blockHeightTimestampSafeSelector({
+              blockHeight: start_height,
+              chainId,
+            })
           )
         )
       )
@@ -235,32 +222,10 @@ export const depositInfoSelector: (
 ) => DepositInfoSelector = selectorFamily({
   key: 'daoProposalSingleDepositInfo',
   get:
-    ({ chainId, proposalModuleAddress, version, preProposeAddress }) =>
+    ({ chainId, preProposeAddress }) =>
     ({ get }) => {
       let depositInfo: CheckedDepositInfo | undefined
-      if (
-        !version ||
-        !isFeatureSupportedByVersion(Feature.PrePropose, version)
-      ) {
-        const config = get(
-          CwProposalSingleV1Selectors.configSelector({
-            contractAddress: proposalModuleAddress,
-            chainId,
-          })
-        )
-
-        if (config.deposit_info) {
-          depositInfo = {
-            amount: config.deposit_info.deposit,
-            denom: {
-              cw20: config.deposit_info.token,
-            },
-            refund_policy: config.deposit_info.refund_failed_proposals
-              ? DepositRefundPolicy.Always
-              : DepositRefundPolicy.OnlyPassed,
-          }
-        }
-      } else if (preProposeAddress) {
+      if (preProposeAddress) {
         const config = get(
           DaoPreProposeSingleSelectors.configSelector({
             contractAddress: preProposeAddress,

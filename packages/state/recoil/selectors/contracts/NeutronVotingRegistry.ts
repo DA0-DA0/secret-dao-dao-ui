@@ -25,7 +25,6 @@ import {
 } from '../../atoms'
 import { cosmWasmClientForChainSelector } from '../chain'
 import { contractInfoSelector } from '../contract'
-import { queryContractIndexerSelector } from '../indexer'
 
 type QueryClientParams = WithChainId<{
   contractAddress: string
@@ -76,20 +75,6 @@ export const daoSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const dao = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'item',
-          args: {
-            key: 'dao',
-          },
-        })
-      )
-      if (dao) {
-        return dao
-      }
-
-      // Fallback to chain query if indexer fails.
       const client = get(queryClient(queryClientParams))
       return await client.dao(...params)
     },
@@ -104,20 +89,6 @@ export const configSelector = selectorFamily<
   get:
     ({ params, ...queryClientParams }) =>
     async ({ get }) => {
-      const config = get(
-        queryContractIndexerSelector({
-          ...queryClientParams,
-          formula: 'item',
-          args: {
-            key: 'config',
-          },
-        })
-      )
-      if (config) {
-        return config
-      }
-
-      // Fallback to chain query if indexer fails.
       const client = get(queryClient(queryClientParams))
       return await client.config(...params)
     },

@@ -1,8 +1,7 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 
 import {
-  DaoResponse,
-  GroupContractResponse,
+  AnyContractInfo,
   InfoResponse,
   TotalPowerAtHeightResponse,
   VotingPowerAtHeightResponse,
@@ -10,8 +9,8 @@ import {
 
 export interface DaoVotingCw4ReadOnlyInterface {
   contractAddress: string
-  groupContract: () => Promise<GroupContractResponse>
-  dao: () => Promise<DaoResponse>
+  groupContract: () => Promise<AnyContractInfo>
+  dao: () => Promise<AnyContractInfo>
   votingPowerAtHeight: ({
     address,
     height,
@@ -40,12 +39,12 @@ export class DaoVotingCw4QueryClient implements DaoVotingCw4ReadOnlyInterface {
     this.info = this.info.bind(this)
   }
 
-  groupContract = async (): Promise<GroupContractResponse> => {
+  groupContract = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       group_contract: {},
     })
   }
-  dao = async (): Promise<DaoResponse> => {
+  dao = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       dao: {},
     })

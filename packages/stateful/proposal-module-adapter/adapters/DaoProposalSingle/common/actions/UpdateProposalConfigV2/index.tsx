@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { constSelector, useRecoilValueLoadable } from 'recoil'
+import { constSelector, useRecoilValueLoadable, waitForAll } from 'recoil'
 
 import {
   Cw1WhitelistSelectors,
@@ -23,7 +23,7 @@ import {
   UseDefaults,
   UseTransformToCosmos,
 } from '@dao-dao/types'
-import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import { ExecuteMsg } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
   ContractName,
@@ -252,20 +252,29 @@ export const makeUpdateProposalConfigV2ActionMaker = ({
     const useTransformToCosmos: UseTransformToCosmos<
       UpdateProposalConfigData
     > = () => {
-      const proposalModuleConfig = useCachedLoadingWithError(
-        DaoProposalSingleV2Selectors.configSelector({
-          chainId,
-          contractAddress: proposalModuleAddress,
-        })
+      const configLoadable = useCachedLoadingWithError(
+        waitForAll([
+          DaoProposalSingleV2Selectors.configSelector({
+            chainId,
+            contractAddress: proposalModuleAddress,
+          }),
+          DaoProposalSingleV2Selectors.daoSelector({
+            chainId,
+            contractAddress: proposalModuleAddress,
+            params: [],
+          }),
+        ])
       )
 
       return useCallback(
         (data: UpdateProposalConfigData) => {
-          if (proposalModuleConfig.loading) {
+          if (configLoadable.loading) {
             return
-          } else if (proposalModuleConfig.errored) {
-            throw proposalModuleConfig.error
+          } else if (configLoadable.errored) {
+            throw configLoadable.error
           }
+
+          const [config, daoInfo] = configLoadable.data
 
           const updateConfigMessage: ExecuteMsg = {
             update_config: {
@@ -301,10 +310,13 @@ export const makeUpdateProposalConfigV2ActionMaker = ({
                   veto: convertVetoConfigToCosmos(data.veto),
                 }),
               // Pass through because we don't support changing them yet.
-              dao: proposalModuleConfig.data.dao,
               close_proposal_on_execution_failure:
-                proposalModuleConfig.data.close_proposal_on_execution_failure,
-              min_voting_period: proposalModuleConfig.data.min_voting_period,
+                config.close_proposal_on_execution_failure,
+              min_voting_period: config.min_voting_period,
+              // Never change this.
+              dao: daoInfo.addr,
+              code_hash: daoInfo.code_hash,
+              query_auth: config.query_auth,
             },
           }
 
@@ -318,7 +330,7 @@ export const makeUpdateProposalConfigV2ActionMaker = ({
             },
           })
         },
-        [proposalModuleConfig]
+        [configLoadable]
       )
     }
 

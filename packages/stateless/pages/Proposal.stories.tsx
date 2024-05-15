@@ -10,7 +10,7 @@ import {
   makeDappLayoutDecorator,
   makeProposalModuleAdapterDecorator,
 } from '@dao-dao/storybook/decorators'
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import {
   ProposalContentDisplayProps,

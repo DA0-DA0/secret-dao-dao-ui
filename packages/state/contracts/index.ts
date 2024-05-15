@@ -18,10 +18,6 @@ export {
   CwPayrollFactoryQueryClient,
 } from './CwPayrollFactory'
 export {
-  CwProposalSingleV1Client,
-  CwProposalSingleV1QueryClient,
-} from './CwProposalSingle.v1'
-export {
   CwTokenfactoryIssuerClient,
   CwTokenfactoryIssuerQueryClient,
 } from './CwTokenfactoryIssuer'

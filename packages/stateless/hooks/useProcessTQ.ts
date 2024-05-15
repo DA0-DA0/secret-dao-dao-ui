@@ -6,7 +6,7 @@ import {
   ProcessedTQType,
   ProcessedThresholdQuorum,
 } from '@dao-dao/types'
-import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import { formatPercentOf100 } from '@dao-dao/utils'
 
 export const useProcessTQ = () => {

@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 
 import { Loader } from '@dao-dao/stateless'
-import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import { useLoadingVoteOptions } from '../../hooks/useLoadingVoteOptions'
 

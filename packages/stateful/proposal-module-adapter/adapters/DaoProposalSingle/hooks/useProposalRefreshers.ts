@@ -3,7 +3,7 @@ import { constSelector, useSetRecoilState } from 'recoil'
 
 import {
   DaoPreProposeApprovalSingleSelectors,
-  DaoProposalSingleCommonSelectors,
+  DaoProposalSingleV2Selectors,
   refreshProposalIdAtom,
   refreshProposalsIdAtom,
 } from '@dao-dao/state'
@@ -43,7 +43,7 @@ export const useProposalRefreshers = (): ProposalRefreshers => {
 
   const loadingProposal = useCachedLoading(
     !isPreProposeApprovalProposal
-      ? DaoProposalSingleCommonSelectors.proposalSelector({
+      ? DaoProposalSingleV2Selectors.proposalSelector({
           contractAddress: proposalModuleAddress,
           chainId,
           params: [

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { constSelector, useRecoilValueLoadable } from 'recoil'
+import { constSelector, useRecoilValueLoadable, waitForAll } from 'recoil'
 
 import {
   Cw1WhitelistSelectors,
@@ -220,20 +220,29 @@ export const makeUpdateProposalConfigActionMaker = ({
     const useTransformToCosmos: UseTransformToCosmos<
       UpdateProposalConfigData
     > = () => {
-      const proposalModuleConfig = useCachedLoadingWithError(
-        DaoProposalMultipleSelectors.configSelector({
-          chainId,
-          contractAddress: proposalModuleAddress,
-        })
+      const configLoadable = useCachedLoadingWithError(
+        waitForAll([
+          DaoProposalMultipleSelectors.configSelector({
+            chainId,
+            contractAddress: proposalModuleAddress,
+          }),
+          DaoProposalMultipleSelectors.daoSelector({
+            chainId,
+            contractAddress: proposalModuleAddress,
+            params: [],
+          }),
+        ])
       )
 
       return useCallback(
         (data: UpdateProposalConfigData) => {
-          if (proposalModuleConfig.loading) {
+          if (configLoadable.loading) {
             return
-          } else if (proposalModuleConfig.errored) {
-            throw proposalModuleConfig.error
+          } else if (configLoadable.errored) {
+            throw configLoadable.error
           }
+
+          const [config, daoInfo] = configLoadable.data
 
           const updateConfigMessage: ExecuteMsg = {
             update_config: {
@@ -256,10 +265,13 @@ export const makeUpdateProposalConfigActionMaker = ({
                   veto: convertVetoConfigToCosmos(data.veto),
                 }),
               // Pass through because we don't support changing them yet.
-              dao: proposalModuleConfig.data.dao,
               close_proposal_on_execution_failure:
-                proposalModuleConfig.data.close_proposal_on_execution_failure,
-              min_voting_period: proposalModuleConfig.data.min_voting_period,
+                config.close_proposal_on_execution_failure,
+              min_voting_period: config.min_voting_period,
+              // Never change this.
+              dao: daoInfo.addr,
+              code_hash: daoInfo.code_hash,
+              query_auth: config.query_auth,
             },
           }
 
@@ -273,7 +285,7 @@ export const makeUpdateProposalConfigActionMaker = ({
             },
           })
         },
-        [proposalModuleConfig]
+        [configLoadable]
       )
     }
 

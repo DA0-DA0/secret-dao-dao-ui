@@ -10,10 +10,10 @@ import {
   UseTransformToCosmos,
 } from '@dao-dao/types/actions'
 import {
-  convertDenomToMicroDenomWithDecimals,
+  convertDenomToMicroDenomStringWithDecimals,
   convertMicroDenomToDenomWithDecimals,
-  makeExecutableMintMessage,
-  makeMintMessage,
+  encodeJsonToBase64,
+  makeWasmMessage,
 } from '@dao-dao/utils'
 
 import { AddressInput } from '../../../../../components'
@@ -29,16 +29,25 @@ const useTransformToCosmos: UseTransformToCosmos<MintData> = () => {
   const { governanceToken } = useGovernanceTokenInfo()
 
   return useCallback(
-    (data: MintData) => {
-      const amount = convertDenomToMicroDenomWithDecimals(
-        data.amount,
-        governanceToken.decimals
-      )
-      return makeExecutableMintMessage(
-        makeMintMessage(BigInt(amount).toString(), data.to),
-        governanceToken.denomOrAddress
-      )
-    },
+    (data: MintData) =>
+      makeWasmMessage({
+        wasm: {
+          execute: {
+            code_hash: governanceToken.snip20CodeHash || '',
+            contract_addr: governanceToken.denomOrAddress,
+            msg: encodeJsonToBase64({
+              mint: {
+                amount: convertDenomToMicroDenomStringWithDecimals(
+                  data.amount,
+                  governanceToken.decimals
+                ),
+                recipient: data.to,
+              },
+            }),
+            send: [],
+          },
+        },
+      }),
     [governanceToken]
   )
 }

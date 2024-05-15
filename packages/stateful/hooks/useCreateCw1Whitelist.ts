@@ -50,7 +50,7 @@ export const useCreateCw1Whitelist = ({
     chainId: _chainId,
   })
   const cw1WhitelistCodeId =
-    getSupportedChainConfig(chainId)?.codeIds?.Cw1Whitelist ?? -1
+    getSupportedChainConfig(chainId)?.codeIds?.Cw1Whitelist?.codeId ?? -1
   const [creatingCw1Whitelist, setCreatingCw1Whitelist] = useState(false)
 
   const validationRef = useRef(validation)

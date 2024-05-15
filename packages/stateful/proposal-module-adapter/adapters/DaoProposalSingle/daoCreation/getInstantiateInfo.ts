@@ -4,8 +4,10 @@ import {
 } from '@dao-dao/types'
 import { InstantiateMsg as DaoPreProposeApprovalSingleInstantiateMsg } from '@dao-dao/types/contracts/DaoPreProposeApprovalSingle'
 import { InstantiateMsg as DaoPreProposeSingleInstantiateMsg } from '@dao-dao/types/contracts/DaoPreProposeSingle'
-import { PercentageThreshold } from '@dao-dao/types/contracts/DaoProposalSingle.common'
-import { InstantiateMsg as DaoProposalSingleInstantiateMsg } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
+import {
+  InstantiateMsg as DaoProposalSingleInstantiateMsg,
+  PercentageThreshold,
+} from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
   DaoProposalSingleAdapterId,
   convertDenomToMicroDenomStringWithDecimals,
@@ -66,7 +68,10 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
                           }
                         : // proposalDeposit.type === 'cw20'
                           {
-                            cw20: proposalDeposit.denomOrAddress,
+                            snip20: [
+                              proposalDeposit.denomOrAddress,
+                              proposalDeposit.token?.snip20CodeHash || '',
+                            ],
                           },
                   },
                 },
@@ -75,6 +80,7 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
       : null,
     extension: {},
     open_proposal_submission: anyoneCanPropose,
+    proposal_module_code_hash: codeIds.DaoProposalSingle.codeHash,
   }
 
   const preProposeInstantiateMsg = approver.enabled
@@ -105,8 +111,11 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
         info: {
           admin: { core_module: {} },
           code_id: approver.enabled
-            ? codeIds.DaoPreProposeApprovalSingle
-            : codeIds.DaoPreProposeSingle,
+            ? codeIds.DaoPreProposeApprovalSingle.codeId
+            : codeIds.DaoPreProposeSingle.codeId,
+          code_hash: approver.enabled
+            ? codeIds.DaoPreProposeApprovalSingle.codeHash
+            : codeIds.DaoPreProposeSingle.codeHash,
           label: `DAO_${name.trim()}_pre-propose${
             approver.enabled ? '-approval' : ''
           }_${DaoProposalSingleAdapterId}`,
@@ -130,6 +139,9 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
           },
         },
     veto: convertVetoConfigToCosmos(veto),
+    dao_code_hash: codeIds.DaoCore.codeHash,
+    // TODO(secret): add query_auth
+    query_auth: {},
   }
 
   // Validate and throw error if invalid according to JSON schema.
@@ -137,7 +149,8 @@ export const getInstantiateInfo: DaoCreationGetInstantiateInfo<
 
   return {
     admin: { core_module: {} },
-    code_id: codeIds.DaoProposalSingle,
+    code_id: codeIds.DaoProposalSingle.codeId,
+    code_hash: codeIds.DaoProposalSingle.codeHash,
     label: `DAO_${name.trim()}_${DaoProposalSingleAdapterId}`,
     msg: encodeJsonToBase64(msg),
     funds: [],

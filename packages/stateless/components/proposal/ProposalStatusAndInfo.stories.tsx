@@ -8,7 +8,7 @@ import {
 import { ComponentMeta, ComponentStory } from '@storybook/react'
 
 import { ProposalVoterProps } from '@dao-dao/types'
-import { Vote as VoteType } from '@dao-dao/types/contracts/DaoProposalSingle.common'
+import { Vote as VoteType } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
 import { ButtonLink } from '../buttons'
 import { CopyToClipboardUnderline } from '../CopyToClipboard'
