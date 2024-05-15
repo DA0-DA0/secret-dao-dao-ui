@@ -176,37 +176,34 @@ export type SupportedChain = SupportedChainConfig & {
   chain: Chain
 }
 
+export type SecretCodeInfo = {
+  codeId: number
+  codeHash: string
+}
+
 export type CodeIdConfig = {
-  // https://github.com/CosmWasm/cw-plus
-  Cw1Whitelist: number
-  Cw4Group: number
-  // https://github.com/CosmWasm/cw-nfts
-  Cw721Base?: number
+  Cw1Whitelist: SecretCodeInfo
+  Cw4Group: SecretCodeInfo
+
+  Snip20Base: SecretCodeInfo
+  Snip20Stake: SecretCodeInfo
+  Snip721Base: SecretCodeInfo
 
   // https://github.com/DA0-DA0/dao-contracts
-  CwPayrollFactory: number
-  CwTokenSwap: number
-  CwTokenfactoryIssuerMain: number
-  CwVesting: number
-  DaoCore: number
-  DaoMigrator: number
-  DaoPreProposeApprovalSingle: number
-  DaoPreProposeApprover: number
-  DaoPreProposeMultiple: number
-  DaoPreProposeSingle: number
-  DaoProposalMultiple: number
-  DaoProposalSingle: number
-  DaoVotingCw4: number
-  DaoVotingCw721Staked: number
-  DaoVotingTokenStaked: number
-
-  // For migrating Migaloo DAOs from cosmwasm to osmosis x/tokenfactory.
-  CwTokenfactoryIssuerCosmWasm?: number
-
-  // For migrating v1 to v2 DAOs, and some chains use CW20s.
-  Cw20Base?: number
-  Cw20Stake?: number
-  DaoVotingCw20Staked?: number
+  CwPayrollFactory: SecretCodeInfo
+  CwTokenSwap: SecretCodeInfo
+  CwVesting: SecretCodeInfo
+  DaoCore: SecretCodeInfo
+  DaoMigrator: SecretCodeInfo
+  DaoPreProposeApprovalSingle: SecretCodeInfo
+  DaoPreProposeApprover: SecretCodeInfo
+  DaoPreProposeMultiple: SecretCodeInfo
+  DaoPreProposeSingle: SecretCodeInfo
+  DaoProposalMultiple: SecretCodeInfo
+  DaoProposalSingle: SecretCodeInfo
+  DaoVotingCw4: SecretCodeInfo
+  DaoVotingSnip721Staked: SecretCodeInfo
+  DaoVotingSnip20Staked: SecretCodeInfo
 }
 
 export type PolytoneConnection = {

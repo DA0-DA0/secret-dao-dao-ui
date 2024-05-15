@@ -2,7 +2,7 @@ import { selectorFamily } from 'recoil'
 
 import { WithChainId } from '@dao-dao/types'
 
-import { CwAdminFactoryClient as ExecuteClient } from '../../../contracts/CwAdminFactory'
+import { SecretCwAdminFactoryClient as ExecuteClient } from '../../../contracts/SecretCwAdminFactory'
 import { signingCosmWasmClientAtom } from '../../atoms'
 
 export type ExecuteClientParams = WithChainId<{
@@ -14,7 +14,7 @@ export const executeClient = selectorFamily<
   ExecuteClient | undefined,
   ExecuteClientParams
 >({
-  key: 'cwAdminFactoryExecuteClient',
+  key: 'secretCwAdminFactoryExecuteClient',
   get:
     ({ chainId, contractAddress, sender }) =>
     ({ get }) => {

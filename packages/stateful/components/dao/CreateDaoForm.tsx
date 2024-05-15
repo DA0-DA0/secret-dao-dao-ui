@@ -44,7 +44,6 @@ import {
 import { InstantiateMsg as DaoCoreV2InstantiateMsg } from '@dao-dao/types/contracts/DaoCore.v2'
 import instantiateSchema from '@dao-dao/types/contracts/DaoCore.v2.instantiate_schema.json'
 import {
-  CHAIN_GAS_MULTIPLIER,
   DaoProposalMultipleAdapterId,
   NEW_DAO_TOKEN_DECIMALS,
   TokenBasedCreatorId,
@@ -69,7 +68,7 @@ import {
   CreatorData as TokenBasedCreatorData,
 } from '../../creators/TokenBased/types'
 import {
-  CwAdminFactoryHooks,
+  SecretCwAdminFactoryHooks,
   useAwaitNextBlock,
   useFollowingDaos,
   useQuerySyncedRecoilState,
@@ -406,8 +405,8 @@ export const InnerCreateDaoForm = ({
   const { isWalletConnected, address: walletAddress } = useWallet()
   const { refreshBalances } = useWalletBalances()
 
-  const instantiateWithFactory =
-    CwAdminFactoryHooks.useInstantiateWithAdminFactory({
+  const instantiateWithSelfAdmin =
+    SecretCwAdminFactoryHooks.useInstantiateContractWithSelfAdmin({
       contractAddress: factoryContractAddress,
       sender: walletAddress ?? '',
     })
@@ -419,13 +418,18 @@ export const InnerCreateDaoForm = ({
       throw new Error(t('error.loadingData'))
     }
 
-    const { events } = await instantiateWithFactory(
+    const { events } = await instantiateWithSelfAdmin(
       {
-        codeId: codeIds.DaoCore,
-        instantiateMsg: encodeJsonToBase64(instantiateMsg),
-        label: instantiateMsg.name,
+        moduleInfo: {
+          code_id: codeIds.DaoCore.codeId,
+          code_hash: codeIds.DaoCore.codeHash,
+          msg: encodeJsonToBase64(instantiateMsg),
+          admin: { core_module: {} },
+          funds: [],
+          label: instantiateMsg.name,
+        },
       },
-      CHAIN_GAS_MULTIPLIER,
+      undefined,
       undefined,
       getFundsFromDaoInstantiateMsg(instantiateMsg)
     )
