@@ -45,6 +45,7 @@ import {
   decodeMessages,
   getAccountAddress,
   getAccountChainId,
+  getChainForChainId,
   getDisplayNameForChainId,
   maybeMakePolytoneExecuteMessage,
 } from '@dao-dao/utils'
@@ -131,7 +132,7 @@ export const AppsTab = () => {
       maybeMakePolytoneExecuteMessage(
         currentChainId,
         chainId,
-        protobufToCwMsg(msg, false).msg
+        protobufToCwMsg(getChainForChainId(chainId), msg, false).msg
       )
     )
     setMsgs(messages)
@@ -147,7 +148,10 @@ export const AppsTab = () => {
       maybeMakePolytoneExecuteMessage(
         currentChainId,
         chainId,
-        decodedStargateMsgToCw(aminoTypes.fromAmino(msg)).msg
+        decodedStargateMsgToCw(
+          getChainForChainId(chainId),
+          aminoTypes.fromAmino(msg)
+        ).msg
       )
     )
     setMsgs(messages)

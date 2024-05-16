@@ -1,45 +1,22 @@
-import { wallets as coin98Wallets } from '@cosmos-kit/coin98'
-import { wallets as compassWallets } from '@cosmos-kit/compass'
 import { Endpoints, SignerOptions } from '@cosmos-kit/core'
-import { wallets as cosmosExtensionMetamaskWallets } from '@cosmos-kit/cosmos-extension-metamask'
-import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation'
-import { wallets as exodusWallets } from '@cosmos-kit/exodus'
-import { wallets as frontierWallets } from '@cosmos-kit/frontier'
 import { wallets as keplrWallets } from '@cosmos-kit/keplr'
 import { wallets as keplrExtensionWallets } from '@cosmos-kit/keplr-extension'
-import { wallets as leapWallets } from '@cosmos-kit/leap'
-import { wallets as leapMetamaskWallets } from '@cosmos-kit/leap-metamask-cosmos-snap'
-import { wallets as ledgerWallets } from '@cosmos-kit/ledger'
-import { wallets as ninjiWallets } from '@cosmos-kit/ninji'
-import { wallets as okxWallets } from '@cosmos-kit/okxwallet'
-import { wallets as omniWallets } from '@cosmos-kit/omni'
-import { wallets as owalletWallets } from '@cosmos-kit/owallet'
 import { ChainProvider } from '@cosmos-kit/react-lite'
-import { wallets as shellWallets } from '@cosmos-kit/shell'
-import { wallets as stationWallets } from '@cosmos-kit/station'
-import { wallets as tailwindWallets } from '@cosmos-kit/tailwind'
-import { wallets as trustWallets } from '@cosmos-kit/trust'
-import { wallets as vectisWallets } from '@cosmos-kit/vectis'
-import { PromptSign, makeWeb3AuthWallets } from '@cosmos-kit/web3auth'
-import { wallets as xdefiWallets } from '@cosmos-kit/xdefi'
 import { assets, chains } from 'chain-registry'
-import { PropsWithChildren, ReactNode, useEffect, useMemo, useRef } from 'react'
+import { PropsWithChildren, ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePrevious } from 'react-use'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 
 import { isInIframe } from '@dao-dao/cosmiframe'
 import {
   isKeplrMobileWebAtom,
   mountedInBrowserAtom,
-  web3AuthPromptAtom,
 } from '@dao-dao/state/recoil'
 import {
   CHAIN_ENDPOINTS,
-  MAINNET,
   SITE_TITLE,
   SITE_URL,
-  WEB3AUTH_CLIENT_ID,
   getChainForChainId,
   getKeplrFromWindow,
   getSignerOptions,
@@ -47,11 +24,6 @@ import {
 
 import { useSyncWalletSigner, useWallet } from '../../hooks'
 import { WalletUi } from './WalletUi'
-
-// Set better name for MetaMask wallets.
-leapMetamaskWallets[0].walletInfo.prettyName = 'MetaMask (Leap Snap)'
-cosmosExtensionMetamaskWallets[0].walletInfo.prettyName =
-  'MetaMask (Cosmos Extension)'
 
 const ALLOWED_IFRAME_PARENT_ORIGINS = [
   'https://daodao.zone',
@@ -69,52 +41,6 @@ export type WalletProviderProps = {
 
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const { t } = useTranslation()
-
-  const setWeb3AuthPrompt = useSetRecoilState(web3AuthPromptAtom)
-
-  // Google, Apple, Discord, Twitter
-  const web3AuthWallets = useMemo(
-    () =>
-      makeWeb3AuthWallets({
-        loginMethods: [
-          {
-            provider: 'google',
-            name: 'Google',
-            logo: 'https://bafkreihcbb7vqxb3ee52kn5fnsf4rzqtjru5n6q2k4ungbw7k3ljpnhhvm.ipfs.nftstorage.link/',
-          },
-          {
-            provider: 'apple',
-            name: 'Apple',
-            logo: 'https://bafkreih5fbwcnzq4xmarrgcf5wkr5mpx5gfia2loj5fruaa542v7kwv5iq.ipfs.nftstorage.link/',
-          },
-          {
-            provider: 'discord',
-            name: 'Discord',
-            logo: 'https://bafkreifssoo7ljepiix4tvrpe4gbqlyhwx6vu6rtir4ou45pj7nv5mjnhm.ipfs.nftstorage.link/',
-          },
-          {
-            provider: 'twitter',
-            name: 'Twitter',
-            logo: 'https://bafkreibfs3mpmwmaxqakpkpss7pjoe4tl2td3ghxt2mi75pyvrm47qn4jy.ipfs.nftstorage.link/',
-          },
-        ],
-        client: {
-          clientId: WEB3AUTH_CLIENT_ID,
-          web3AuthNetwork: MAINNET ? 'cyan' : 'testnet',
-        },
-        promptSign: (...params: Parameters<PromptSign>): Promise<boolean> =>
-          new Promise((resolve) =>
-            setWeb3AuthPrompt({
-              signData: params[1],
-              resolve: (approved) => {
-                setWeb3AuthPrompt(undefined)
-                resolve(approved)
-              },
-            })
-          ),
-      }),
-    [setWeb3AuthPrompt]
-  )
 
   const signerOptions: SignerOptions = {
     // cosmos-kit has an older version of the package. This is a workaround.
@@ -139,37 +65,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // If in iframe, show no wallets, which will make it only show the iframe
   // wallet since that's installed by default.
-  const allWallets = isInIframe()
-    ? []
-    : [
-        ...leapMetamaskWallets,
-        // Alphabetize.
-        ...[
-          ...keplrWallets,
-          ...leapWallets.filter((w) => !leapMetamaskWallets.includes(w)),
-          ...stationWallets,
-          ...vectisWallets,
-          ...trustWallets,
-          ...cosmostationWallets,
-          ...coin98Wallets,
-          ...omniWallets,
-          ...shellWallets,
-          ...xdefiWallets,
-          ...okxWallets,
-          ...compassWallets,
-          ...frontierWallets,
-          ...cosmosExtensionMetamaskWallets,
-          ...exodusWallets,
-          ...ledgerWallets,
-          ...tailwindWallets,
-          ...ninjiWallets,
-          ...owalletWallets,
-        ].sort((a, b) =>
-          a.walletInfo.prettyName.localeCompare(b.walletInfo.prettyName)
-        ),
-        // Google, Apple, Discord, Twitter
-        ...web3AuthWallets,
-      ]
+  const allWallets = isInIframe() ? [] : [...keplrWallets]
 
   return (
     <ChainProvider

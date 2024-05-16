@@ -497,13 +497,14 @@ export const decodeIcaExecuteMsg = (
       srcChainId,
       connectionId
     )
-    const chainId = getChainForChainName(destinationChain.chain_name).chain_id
+    const chain = getChainForChainName(destinationChain.chain_name)
 
     const { packetData: { data } = {} } = decodedMsg.stargate.value as MsgSendTx
     const protobufMessages = data && CosmosTx.decode(data).messages
     const cosmosMsgsWithSenders =
-      protobufMessages?.map((protobuf) => protobufToCwMsg(protobuf, false)) ||
-      []
+      protobufMessages?.map((protobuf) =>
+        protobufToCwMsg(chain, protobuf, false)
+      ) || []
 
     if (
       (type === 'zero' && cosmosMsgsWithSenders.length !== 0) ||
@@ -522,7 +523,7 @@ export const decodeIcaExecuteMsg = (
 
     return {
       match: true,
-      chainId,
+      chainId: chain.chain_id,
       msgWithSender: msgsWithSenders[0],
       cosmosMsgWithSender: cosmosMsgsWithSenders[0],
       msgsWithSenders,

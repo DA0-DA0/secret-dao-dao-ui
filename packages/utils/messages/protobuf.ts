@@ -16,6 +16,7 @@ import { MsgExecLegacyContent } from '@dao-dao/types/protobuf/codegen/cosmos/gov
 import { TextProposal } from '@dao-dao/types/protobuf/codegen/cosmos/gov/v1beta1/gov'
 import { Any } from '@dao-dao/types/protobuf/codegen/google/protobuf/any'
 
+import { getChainForChainId } from '../chain'
 import { transformIpfsUrlToHttpsIfNecessary } from '../conversion'
 import { processError } from '../error'
 import { isValidUrl } from '../isValidUrl'
@@ -24,11 +25,12 @@ import { isCosmWasmStargateMsg } from './cw'
 
 // Decode governance proposal v1 messages using a protobuf.
 export const decodeGovProposalV1Messages = (
+  chainId: string,
   messages: GovProposalV1['proposal']['messages']
 ): GovProposalV1DecodedMessages =>
   messages.map((msg) => {
     try {
-      return protobufToCwMsg(msg).msg
+      return protobufToCwMsg(getChainForChainId(chainId), msg).msg
     } catch (err) {
       // If protobuf not found, capture error and return placeholder.
       console.error(processError(err, { forceCapture: true }))
@@ -43,6 +45,7 @@ export const decodeGovProposalV1Messages = (
 
 // Decode governance proposal content using a protobuf.
 export const decodeGovProposal = async (
+  chainId: string,
   govProposal: GovProposal
 ): Promise<GovProposalWithDecodedContent> => {
   if (govProposal.version === GovProposalVersion.V1_BETA_1) {
@@ -73,6 +76,7 @@ export const decodeGovProposal = async (
   }
 
   const decodedMessages = decodeGovProposalV1Messages(
+    chainId,
     govProposal.proposal.messages.filter(
       ({ typeUrl }) => typeUrl !== MsgExecLegacyContent.typeUrl
     )

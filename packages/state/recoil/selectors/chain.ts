@@ -750,6 +750,7 @@ export const searchedDecodedGovProposalsSelector = selectorFamily<
         await Promise.allSettled(
           results.map(async ({ value: { id, data } }) =>
             decodeGovProposal(
+              options.chainId,
               supportsV1Gov
                 ? {
                     version: GovProposalVersion.V1,
@@ -911,14 +912,14 @@ export const govProposalsSelector = selectorFamily<
 
       const proposals = await Promise.all([
         ...(v1Beta1Proposals || []).map((proposal) =>
-          decodeGovProposal({
+          decodeGovProposal(chainId, {
             version: GovProposalVersion.V1_BETA_1,
             id: proposal.proposalId,
             proposal,
           })
         ),
         ...(v1Proposals || []).map((proposal) =>
-          decodeGovProposal({
+          decodeGovProposal(chainId, {
             version: GovProposalVersion.V1,
             id: proposal.id,
             proposal,
@@ -963,7 +964,7 @@ export const govProposalSelector = selectorFamily<
               throw new Error('Proposal not found')
             }
 
-            govProposal = await decodeGovProposal({
+            govProposal = await decodeGovProposal(chainId, {
               version: GovProposalVersion.V1,
               id: BigInt(proposalId),
               proposal,
@@ -993,7 +994,7 @@ export const govProposalSelector = selectorFamily<
             throw new Error('Proposal not found')
           }
 
-          govProposal = await decodeGovProposal({
+          govProposal = await decodeGovProposal(chainId, {
             version: GovProposalVersion.V1_BETA_1,
             id: BigInt(proposalId),
             proposal,

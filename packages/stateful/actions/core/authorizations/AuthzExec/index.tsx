@@ -26,6 +26,7 @@ import { MsgExec } from '@dao-dao/types/protobuf/codegen/cosmos/authz/v1beta1/tx
 import {
   decodePolytoneExecuteMsg,
   getChainAddressForActionOptions,
+  getChainForChainId,
   isDecodedStargateMsg,
   maybeMakePolytoneExecuteMessage,
   objectMatchesStructure,
@@ -220,7 +221,7 @@ export const makeAuthzExecAction: ActionMaker<AuthzExecData> = (options) => {
 
       // Group adjacent messages by sender, preserving message order.
       const msgsPerSender = execMsg.msgs
-        .map((msg) => protobufToCwMsg(msg))
+        .map((msg) => protobufToCwMsg(getChainForChainId(chainId), msg))
         .reduce(
           (acc, { msg, sender }) => {
             const last = acc[acc.length - 1]

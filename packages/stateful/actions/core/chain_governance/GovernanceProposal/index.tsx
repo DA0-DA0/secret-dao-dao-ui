@@ -523,7 +523,10 @@ export const makeGovernanceProposalAction: ActionMaker<
 
     if (msg.stargate.typeUrl === MsgSubmitProposalV1.typeUrl) {
       const proposal = msg.stargate.value as MsgSubmitProposalV1
-      const decodedMessages = decodeGovProposalV1Messages(proposal.messages)
+      const decodedMessages = decodeGovProposalV1Messages(
+        chainId,
+        proposal.messages
+      )
 
       return {
         match: true,
