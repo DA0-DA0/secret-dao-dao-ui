@@ -23,8 +23,10 @@ import {
   UseDefaults,
   UseTransformToCosmos,
 } from '@dao-dao/types'
-import { Threshold } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
-import { ExecuteMsg } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
+import {
+  ExecuteMsg,
+  Threshold,
+} from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 import {
   ContractName,
   DAO_PROPOSAL_SINGLE_CONTRACT_NAMES,
