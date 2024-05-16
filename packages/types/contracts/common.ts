@@ -309,3 +309,34 @@ export type SecretAnyContractInfo = {
   addr: Addr
   code_hash: string
 }
+
+export type Auth =
+  | {
+      viewing_key: {
+        address: string
+        key: string
+      }
+    }
+  | {
+      permit: PermitForPermitData
+    }
+export interface PermitForPermitData {
+  account_number?: Uint128 | null
+  chain_id?: string | null
+  memo?: string | null
+  params: PermitData
+  sequence?: Uint128 | null
+  signature: PermitSignature
+}
+export interface PermitData {
+  data: Binary
+  key: string
+}
+export interface PermitSignature {
+  pub_key: PubKey
+  signature: Binary
+}
+export interface PubKey {
+  type: string
+  value: Binary
+}

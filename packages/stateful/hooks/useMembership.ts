@@ -1,7 +1,7 @@
 import { DaoCoreV2Selectors } from '@dao-dao/state'
 import { useCachedLoadable, useChain } from '@dao-dao/stateless'
 
-import { useWallet } from './useWallet'
+import { useWalletWithSecretNetworkPermit } from './useWalletWithSecretNetworkPermit'
 
 interface UseMembershipOptions {
   coreAddress: string
@@ -20,18 +20,20 @@ export const useMembership = ({
   blockHeight,
 }: UseMembershipOptions): UseMembershipResponse => {
   const { chain_id: chainId } = useChain()
-  const { address: walletAddress, isWalletConnecting } = useWallet()
+  const { isWalletConnecting, permit } = useWalletWithSecretNetworkPermit({
+    dao: coreAddress,
+  })
 
   // Use loadable to prevent flickering loading states when wallet address
   // changes and on initial load if wallet is connecting.
   const _walletVotingWeight = useCachedLoadable(
-    walletAddress
+    permit
       ? DaoCoreV2Selectors.votingPowerAtHeightSelector({
           contractAddress: coreAddress,
           chainId,
           params: [
             {
-              address: walletAddress,
+              auth: { permit },
               height: blockHeight,
             },
           ],

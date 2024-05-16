@@ -16,6 +16,7 @@ import {
   DaoInfo,
   Feature,
   LazyDaoCardProps,
+  PermitForPermitData,
   WithChainId,
 } from '@dao-dao/types'
 import {
@@ -68,14 +69,16 @@ export const daoCardInfoSelector = selectorFamily<
 
 export const daoCardInfoLazyDataSelector = selectorFamily<
   DaoCardInfoLazyData,
+  // @ts-ignore
   WithChainId<{
     coreAddress: string
     walletAddress?: string
+    permit?: PermitForPermitData
   }>
 >({
   key: 'daoCardInfoLazyData',
   get:
-    ({ coreAddress, chainId, walletAddress }) =>
+    ({ coreAddress, chainId, walletAddress, permit }) =>
     ({ get }) => {
       const { amount: tvl } = get(
         daoTvlSelector({
@@ -112,13 +115,13 @@ export const daoCardInfoLazyDataSelector = selectorFamily<
 
       // DAO.
 
-      const walletVotingWeight = walletAddress
+      const walletVotingWeight = permit
         ? Number(
             get(
               DaoCoreV2Selectors.votingPowerAtHeightSelector({
                 chainId,
                 contractAddress: coreAddress,
-                params: [{ address: walletAddress }],
+                params: [{ auth: { permit } }],
               })
             ).power
           )

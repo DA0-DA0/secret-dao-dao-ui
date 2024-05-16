@@ -6,11 +6,11 @@ import {
 } from '@cosmjs/cosmwasm-stargate'
 
 import {
+  Auth,
   Coin,
   Duration,
   InfoResponse,
   SecretAnyContractInfo,
-  Uint64,
 } from '@dao-dao/types/contracts/common'
 import {
   Config,
@@ -21,11 +21,12 @@ import {
   ProposalCreationPolicy,
   ProposalListResponse,
   ProposalResponse,
+  RawContract,
+  VetoConfig,
   VoteListResponse,
   VoteResponse,
   VotingStrategy,
 } from '@dao-dao/types/contracts/DaoProposalMultiple'
-import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoProposalMultipleReadOnlyInterface {
   contractAddress: string
@@ -49,13 +50,12 @@ export interface DaoProposalMultipleReadOnlyInterface {
     limit?: number
     startBefore?: number
   }) => Promise<ProposalListResponse>
-  proposalCount: () => Promise<Uint64>
   getVote: ({
+    auth,
     proposalId,
-    voter,
   }: {
+    auth: Auth
     proposalId: number
-    voter: string
   }) => Promise<VoteResponse>
   listVotes: ({
     limit,
@@ -66,18 +66,19 @@ export interface DaoProposalMultipleReadOnlyInterface {
     proposalId: number
     startAfter?: string
   }) => Promise<VoteListResponse>
+  proposalCount: () => Promise<number>
   proposalCreationPolicy: () => Promise<ProposalCreationPolicy>
   proposalHooks: () => Promise<HooksResponse>
   voteHooks: () => Promise<HooksResponse>
   dao: () => Promise<SecretAnyContractInfo>
   info: () => Promise<InfoResponse>
+  nextProposalId: () => Promise<number>
 }
 export class DaoProposalMultipleQueryClient
   implements DaoProposalMultipleReadOnlyInterface
 {
   client: CosmWasmClient
   contractAddress: string
-
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
@@ -85,16 +86,16 @@ export class DaoProposalMultipleQueryClient
     this.proposal = this.proposal.bind(this)
     this.listProposals = this.listProposals.bind(this)
     this.reverseProposals = this.reverseProposals.bind(this)
-    this.proposalCount = this.proposalCount.bind(this)
     this.getVote = this.getVote.bind(this)
     this.listVotes = this.listVotes.bind(this)
+    this.proposalCount = this.proposalCount.bind(this)
     this.proposalCreationPolicy = this.proposalCreationPolicy.bind(this)
     this.proposalHooks = this.proposalHooks.bind(this)
     this.voteHooks = this.voteHooks.bind(this)
     this.dao = this.dao.bind(this)
     this.info = this.info.bind(this)
+    this.nextProposalId = this.nextProposalId.bind(this)
   }
-
   config = async (): Promise<Config> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
@@ -139,22 +140,17 @@ export class DaoProposalMultipleQueryClient
       },
     })
   }
-  proposalCount = async (): Promise<Uint64> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      proposal_count: {},
-    })
-  }
   getVote = async ({
+    auth,
     proposalId,
-    voter,
   }: {
+    auth: Auth
     proposalId: number
-    voter: string
   }): Promise<VoteResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       get_vote: {
+        auth,
         proposal_id: proposalId,
-        voter,
       },
     })
   }
@@ -175,12 +171,16 @@ export class DaoProposalMultipleQueryClient
       },
     })
   }
+  proposalCount = async (): Promise<number> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      proposal_count: {},
+    })
+  }
   proposalCreationPolicy = async (): Promise<ProposalCreationPolicy> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_creation_policy: {},
     })
   }
-
   proposalHooks = async (): Promise<HooksResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_hooks: {},
@@ -199,6 +199,11 @@ export class DaoProposalMultipleQueryClient
   info = async (): Promise<InfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       info: {},
+    })
+  }
+  nextProposalId = async (): Promise<number> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      next_proposal_id: {},
     })
   }
 }
@@ -220,29 +225,35 @@ export interface DaoProposalMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   vote: (
     {
+      auth,
       proposalId,
+      rationale,
       vote,
     }: {
+      auth: Auth
       proposalId: number
+      rationale?: string
       vote: MultipleChoiceVote
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   execute: (
     {
+      auth,
       proposalId,
     }: {
+      auth: Auth
       proposalId: number
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   veto: (
     {
@@ -252,7 +263,7 @@ export interface DaoProposalMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   close: (
     {
@@ -262,29 +273,47 @@ export interface DaoProposalMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateConfig: (
     {
       allowRevoting,
       closeProposalOnExecutionFailure,
+      codeHash,
       dao,
       maxVotingPeriod,
       minVotingPeriod,
       onlyMembersExecute,
+      queryAuth,
+      veto,
       votingStrategy,
     }: {
       allowRevoting: boolean
       closeProposalOnExecutionFailure: boolean
+      codeHash: string
       dao: string
       maxVotingPeriod: Duration
       minVotingPeriod?: Duration
       onlyMembersExecute: boolean
+      queryAuth: RawContract
+      veto?: VetoConfig
       votingStrategy: VotingStrategy
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
+  ) => Promise<ExecuteResult>
+  updateRationale: (
+    {
+      proposalId,
+      rationale,
+    }: {
+      proposalId: number
+      rationale?: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updatePreProposeInfo: (
     {
@@ -294,47 +323,55 @@ export interface DaoProposalMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   addProposalHook: (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   removeProposalHook: (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   addVoteHook: (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   removeVoteHook: (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
 }
 export class DaoProposalMultipleClient
@@ -344,7 +381,6 @@ export class DaoProposalMultipleClient
   client: SigningCosmWasmClient
   sender: string
   contractAddress: string
-
   constructor(
     client: SigningCosmWasmClient,
     sender: string,
@@ -360,13 +396,13 @@ export class DaoProposalMultipleClient
     this.veto = this.veto.bind(this)
     this.close = this.close.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
+    this.updateRationale = this.updateRationale.bind(this)
     this.updatePreProposeInfo = this.updatePreProposeInfo.bind(this)
     this.addProposalHook = this.addProposalHook.bind(this)
     this.removeProposalHook = this.removeProposalHook.bind(this)
     this.addVoteHook = this.addVoteHook.bind(this)
     this.removeVoteHook = this.removeVoteHook.bind(this)
   }
-
   propose = async (
     {
       choices,
@@ -379,9 +415,9 @@ export class DaoProposalMultipleClient
       proposer?: string
       title: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -396,56 +432,65 @@ export class DaoProposalMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   vote = async (
     {
+      auth,
       proposalId,
+      rationale,
       vote,
     }: {
+      auth: Auth
       proposalId: number
+      rationale?: string
       vote: MultipleChoiceVote
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
         vote: {
+          auth,
           proposal_id: proposalId,
+          rationale,
           vote,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   execute = async (
     {
+      auth,
       proposalId,
     }: {
+      auth: Auth
       proposalId: number
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
         execute: {
+          auth,
           proposal_id: proposalId,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   veto = async (
@@ -454,9 +499,9 @@ export class DaoProposalMultipleClient
     }: {
       proposalId: number
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -468,7 +513,7 @@ export class DaoProposalMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   close = async (
@@ -477,9 +522,9 @@ export class DaoProposalMultipleClient
     }: {
       proposalId: number
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -491,30 +536,36 @@ export class DaoProposalMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateConfig = async (
     {
       allowRevoting,
       closeProposalOnExecutionFailure,
+      codeHash,
       dao,
       maxVotingPeriod,
       minVotingPeriod,
       onlyMembersExecute,
+      queryAuth,
+      veto,
       votingStrategy,
     }: {
       allowRevoting: boolean
       closeProposalOnExecutionFailure: boolean
+      codeHash: string
       dao: string
       maxVotingPeriod: Duration
       minVotingPeriod?: Duration
       onlyMembersExecute: boolean
+      queryAuth: RawContract
+      veto?: VetoConfig
       votingStrategy: VotingStrategy
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -523,16 +574,45 @@ export class DaoProposalMultipleClient
         update_config: {
           allow_revoting: allowRevoting,
           close_proposal_on_execution_failure: closeProposalOnExecutionFailure,
+          code_hash: codeHash,
           dao,
           max_voting_period: maxVotingPeriod,
           min_voting_period: minVotingPeriod,
           only_members_execute: onlyMembersExecute,
+          query_auth: queryAuth,
+          veto,
           voting_strategy: votingStrategy,
         },
       },
       fee,
       memo,
-      funds
+      _funds
+    )
+  }
+  updateRationale = async (
+    {
+      proposalId,
+      rationale,
+    }: {
+      proposalId: number
+      rationale?: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[]
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_rationale: {
+          proposal_id: proposalId,
+          rationale,
+        },
+      },
+      fee,
+      memo,
+      _funds
     )
   }
   updatePreProposeInfo = async (
@@ -541,9 +621,9 @@ export class DaoProposalMultipleClient
     }: {
       info: PreProposeInfo
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -555,18 +635,20 @@ export class DaoProposalMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   addProposalHook = async (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -574,22 +656,25 @@ export class DaoProposalMultipleClient
       {
         add_proposal_hook: {
           address,
+          code_hash: codeHash,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   removeProposalHook = async (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -597,22 +682,25 @@ export class DaoProposalMultipleClient
       {
         remove_proposal_hook: {
           address,
+          code_hash: codeHash,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   addVoteHook = async (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -620,22 +708,25 @@ export class DaoProposalMultipleClient
       {
         add_vote_hook: {
           address,
+          code_hash: codeHash,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   removeVoteHook = async (
     {
       address,
+      codeHash,
     }: {
       address: string
+      codeHash: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -643,11 +734,12 @@ export class DaoProposalMultipleClient
       {
         remove_vote_hook: {
           address,
+          code_hash: codeHash,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
 }

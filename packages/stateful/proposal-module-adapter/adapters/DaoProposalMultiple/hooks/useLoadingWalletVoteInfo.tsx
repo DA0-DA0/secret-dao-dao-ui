@@ -6,7 +6,7 @@ import { useCachedLoadable } from '@dao-dao/stateless'
 import { LoadingData, WalletVoteInfo } from '@dao-dao/types'
 import { MultipleChoiceVote } from '@dao-dao/types/contracts/DaoProposalMultiple'
 
-import { useWallet } from '../../../../hooks/useWallet'
+import { useWalletWithSecretNetworkPermit } from '../../../../hooks'
 import { useProposalModuleAdapterOptions } from '../../../react'
 import { useLoadingProposal } from './useLoadingProposal'
 
@@ -19,28 +19,37 @@ export const useLoadingWalletVoteInfo = ():
     proposalNumber,
     chain: { chain_id: chainId },
   } = useProposalModuleAdapterOptions()
-  const { address: walletAddress } = useWallet()
+  const { permit } = useWalletWithSecretNetworkPermit({
+    dao: coreAddress,
+  })
 
   const loadingProposal = useLoadingProposal()
 
   const walletVoteLoadable = useCachedLoadable(
-    walletAddress
+    permit
       ? DaoProposalMultipleSelectors.getVoteSelector({
           chainId,
           contractAddress: proposalModule.address,
-          params: [{ proposalId: proposalNumber, voter: walletAddress }],
+          params: [
+            {
+              proposalId: proposalNumber,
+              auth: {
+                permit,
+              },
+            },
+          ],
         })
       : undefined
   )
 
   const walletVotingPowerWhenProposalCreatedLoadable = useCachedLoadable(
-    walletAddress && !loadingProposal.loading
+    permit && !loadingProposal.loading
       ? DaoCoreV2Selectors.votingPowerAtHeightSelector({
           chainId,
           contractAddress: coreAddress,
           params: [
             {
-              address: walletAddress,
+              auth: { permit },
               height: loadingProposal.data.start_height,
             },
           ],
@@ -62,8 +71,8 @@ export const useLoadingWalletVoteInfo = ():
       : undefined
   )
 
-  // Return undefined when not connected.
-  if (!walletAddress) {
+  // Return undefined when no permit.
+  if (!permit) {
     return undefined
   }
 

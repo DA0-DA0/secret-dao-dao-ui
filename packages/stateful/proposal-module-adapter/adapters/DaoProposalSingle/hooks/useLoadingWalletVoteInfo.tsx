@@ -6,7 +6,7 @@ import { useCachedLoadable } from '@dao-dao/stateless'
 import { LoadingData, WalletVoteInfo } from '@dao-dao/types'
 import { Vote } from '@dao-dao/types/contracts/DaoProposalSingle.v2'
 
-import { useWallet } from '../../../../hooks/useWallet'
+import { useWalletWithSecretNetworkPermit } from '../../../../hooks'
 import { useProposalModuleAdapterOptions } from '../../../react'
 import { useLoadingProposal } from './useLoadingProposal'
 
@@ -20,28 +20,37 @@ export const useLoadingWalletVoteInfo = ():
     chain: { chain_id: chainId },
     isPreProposeApprovalProposal,
   } = useProposalModuleAdapterOptions()
-  const { address: walletAddress } = useWallet()
+  const { permit } = useWalletWithSecretNetworkPermit({
+    dao: coreAddress,
+  })
 
   const loadingProposal = useLoadingProposal()
 
   const walletVoteLoadable = useCachedLoadable(
-    walletAddress
+    permit
       ? DaoProposalSingleV2Selectors.getVoteSelector({
           chainId,
           contractAddress: proposalModule.address,
-          params: [{ proposalId: proposalNumber, voter: walletAddress }],
+          params: [
+            {
+              proposalId: proposalNumber,
+              auth: {
+                permit,
+              },
+            },
+          ],
         })
       : undefined
   )
 
   const walletVotingPowerWhenProposalCreatedLoadable = useCachedLoadable(
-    walletAddress && !loadingProposal.loading
+    permit && !loadingProposal.loading
       ? DaoCoreV2Selectors.votingPowerAtHeightSelector({
           chainId,
           contractAddress: coreAddress,
           params: [
             {
-              address: walletAddress,
+              auth: { permit },
               height: loadingProposal.data.start_height,
             },
           ],
@@ -63,9 +72,9 @@ export const useLoadingWalletVoteInfo = ():
       : undefined
   )
 
-  // Return undefined when not connected or when pre-propose proposal (which
-  // doesn't have voting).
-  if (!walletAddress || isPreProposeApprovalProposal) {
+  // Return undefined when no permit or when pre-propose proposal (which doesn't
+  // have voting).
+  if (!permit || isPreProposeApprovalProposal) {
     return undefined
   }
 

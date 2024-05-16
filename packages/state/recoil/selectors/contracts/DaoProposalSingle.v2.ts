@@ -138,6 +138,7 @@ export const proposalCountSelector = selectorFamily<number, QueryClientParams>({
 })
 export const getVoteSelector = selectorFamily<
   VoteResponse,
+  // @ts-ignore
   QueryClientParams & {
     params: Parameters<DaoProposalSingleV2QueryClient['getVote']>
   }

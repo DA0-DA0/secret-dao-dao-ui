@@ -14,6 +14,7 @@ import {
   useDaoInfoContext,
 } from '@dao-dao/stateless'
 import {
+  Auth,
   ChainId,
   LoadingData,
   PreProposeModuleType,
@@ -30,14 +31,14 @@ import { ProfileProposalCard } from '../components'
 import { useProposalModuleAdapterOptions } from '../proposal-module-adapter'
 import { useMembership } from './useMembership'
 import { UseProposalRelayStateReturn } from './useProposalRelayState'
-import { useWallet } from './useWallet'
+import { useWalletWithSecretNetworkPermit } from './useWalletWithSecretNetworkPermit'
 
 export type UseProposalActionStateOptions = {
   relayState: UseProposalRelayStateReturn
   statusKey: ProposalStatusKey
   loadingExecutionTxHash: LoadingData<string | undefined>
   executeProposal: (
-    options: { proposalId: number },
+    options: { proposalId: number; auth: Auth },
     // No need.
     fee?: undefined,
     memo?: string | undefined
@@ -72,7 +73,9 @@ export const useProposalActionState = ({
   } = useConfiguredChainContext()
   const { coreAddress, items } = useDaoInfoContext()
   const { proposalModule, proposalNumber } = useProposalModuleAdapterOptions()
-  const { isWalletConnected } = useWallet()
+  const { isWalletConnected, getPermit } = useWalletWithSecretNetworkPermit({
+    dao: coreAddress,
+  })
   const { isMember = false } = useMembership({
     coreAddress,
   })
@@ -103,9 +106,12 @@ export const useProposalActionState = ({
 
     setActionLoading(true)
     try {
+      const permit = await getPermit()
+
       await executeProposal(
         {
           proposalId: proposalNumber,
+          auth: { permit },
         },
         undefined,
         allowMemoOnExecute && memo ? memo : undefined
@@ -123,6 +129,7 @@ export const useProposalActionState = ({
     // Loading will stop on success when status refreshes.
   }, [
     isWalletConnected,
+    getPermit,
     executeProposal,
     proposalNumber,
     allowMemoOnExecute,
