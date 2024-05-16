@@ -5,21 +5,17 @@ import {
   SigningCosmWasmClient,
 } from '@cosmjs/cosmwasm-stargate'
 
-import {
-  Binary,
-  Coin,
-  Empty,
-  ProposalStatusEnum,
-} from '@dao-dao/types/contracts/common'
+import { Auth, Binary, Coin, Empty } from '@dao-dao/types/contracts/common'
 import {
   AnyContractInfo,
   Config,
   DepositInfoResponse,
+  HooksResponse,
   ProposeMessage,
+  Status,
   UncheckedDenom,
   UncheckedDepositInfo,
 } from '@dao-dao/types/contracts/DaoPreProposeMultiple'
-import { CHAIN_GAS_MULTIPLIER } from '@dao-dao/utils'
 
 export interface DaoPreProposeMultipleReadOnlyInterface {
   contractAddress: string
@@ -31,6 +27,7 @@ export interface DaoPreProposeMultipleReadOnlyInterface {
   }: {
     proposalId: number
   }) => Promise<DepositInfoResponse>
+  proposalSubmittedHooks: () => Promise<HooksResponse>
   queryExtension: ({ msg }: { msg: Empty }) => Promise<Binary>
 }
 export class DaoPreProposeMultipleQueryClient
@@ -38,7 +35,6 @@ export class DaoPreProposeMultipleQueryClient
 {
   client: CosmWasmClient
   contractAddress: string
-
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
@@ -46,9 +42,9 @@ export class DaoPreProposeMultipleQueryClient
     this.dao = this.dao.bind(this)
     this.config = this.config.bind(this)
     this.depositInfo = this.depositInfo.bind(this)
+    this.proposalSubmittedHooks = this.proposalSubmittedHooks.bind(this)
     this.queryExtension = this.queryExtension.bind(this)
   }
-
   proposalModule = async (): Promise<AnyContractInfo> => {
     return this.client.queryContractSmart(this.contractAddress, {
       proposal_module: {},
@@ -75,6 +71,11 @@ export class DaoPreProposeMultipleQueryClient
       },
     })
   }
+  proposalSubmittedHooks = async (): Promise<HooksResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      proposal_submitted_hooks: {},
+    })
+  }
   queryExtension = async ({ msg }: { msg: Empty }): Promise<Binary> => {
     return this.client.queryContractSmart(this.contractAddress, {
       query_extension: {
@@ -89,13 +90,15 @@ export interface DaoPreProposeMultipleInterface
   sender: string
   propose: (
     {
+      auth,
       msg,
     }: {
+      auth: Auth
       msg: ProposeMessage
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   updateConfig: (
     {
@@ -107,17 +110,19 @@ export interface DaoPreProposeMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   withdraw: (
     {
       denom,
+      key,
     }: {
       denom?: UncheckedDenom
+      key?: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   extension: (
     {
@@ -127,31 +132,43 @@ export interface DaoPreProposeMultipleInterface
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
-  proposalCreatedHook: (
+  addProposalSubmittedHook: (
     {
-      proposalId,
-      proposer,
+      address,
+      codeHash,
     }: {
-      proposalId: number
-      proposer: string
+      address: string
+      codeHash: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
+  ) => Promise<ExecuteResult>
+  removeProposalSubmittedHook: (
+    {
+      address,
+      codeHash,
+    }: {
+      address: string
+      codeHash: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
   proposalCompletedHook: (
     {
       newStatus,
       proposalId,
     }: {
-      newStatus: ProposalStatusEnum
+      newStatus: Status
       proposalId: number
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ) => Promise<ExecuteResult>
 }
 export class DaoPreProposeMultipleClient
@@ -161,7 +178,6 @@ export class DaoPreProposeMultipleClient
   client: SigningCosmWasmClient
   sender: string
   contractAddress: string
-
   constructor(
     client: SigningCosmWasmClient,
     sender: string,
@@ -175,31 +191,35 @@ export class DaoPreProposeMultipleClient
     this.updateConfig = this.updateConfig.bind(this)
     this.withdraw = this.withdraw.bind(this)
     this.extension = this.extension.bind(this)
-    this.proposalCreatedHook = this.proposalCreatedHook.bind(this)
+    this.addProposalSubmittedHook = this.addProposalSubmittedHook.bind(this)
+    this.removeProposalSubmittedHook =
+      this.removeProposalSubmittedHook.bind(this)
     this.proposalCompletedHook = this.proposalCompletedHook.bind(this)
   }
-
   propose = async (
     {
+      auth,
       msg,
     }: {
+      auth: Auth
       msg: ProposeMessage
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
         propose: {
+          auth,
           msg,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   updateConfig = async (
@@ -210,9 +230,9 @@ export class DaoPreProposeMultipleClient
       depositInfo?: UncheckedDepositInfo
       openProposalSubmission: boolean
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -225,18 +245,20 @@ export class DaoPreProposeMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   withdraw = async (
     {
       denom,
+      key,
     }: {
       denom?: UncheckedDenom
+      key?: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -244,11 +266,12 @@ export class DaoPreProposeMultipleClient
       {
         withdraw: {
           denom,
+          key,
         },
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
   extension = async (
@@ -257,9 +280,9 @@ export class DaoPreProposeMultipleClient
     }: {
       msg: Empty
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -271,33 +294,59 @@ export class DaoPreProposeMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
-  proposalCreatedHook = async (
+  addProposalSubmittedHook = async (
     {
-      proposalId,
-      proposer,
+      address,
+      codeHash,
     }: {
-      proposalId: number
-      proposer: string
+      address: string
+      codeHash: string
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
       this.contractAddress,
       {
-        proposal_created_hook: {
-          proposal_id: proposalId,
-          proposer,
+        add_proposal_submitted_hook: {
+          address,
+          code_hash: codeHash,
         },
       },
       fee,
       memo,
-      funds
+      _funds
+    )
+  }
+  removeProposalSubmittedHook = async (
+    {
+      address,
+      codeHash,
+    }: {
+      address: string
+      codeHash: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[]
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        remove_proposal_submitted_hook: {
+          address,
+          code_hash: codeHash,
+        },
+      },
+      fee,
+      memo,
+      _funds
     )
   }
   proposalCompletedHook = async (
@@ -305,12 +354,12 @@ export class DaoPreProposeMultipleClient
       newStatus,
       proposalId,
     }: {
-      newStatus: ProposalStatusEnum
+      newStatus: Status
       proposalId: number
     },
-    fee: number | StdFee | 'auto' = CHAIN_GAS_MULTIPLIER,
+    fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[]
+    _funds?: Coin[]
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -323,7 +372,7 @@ export class DaoPreProposeMultipleClient
       },
       fee,
       memo,
-      funds
+      _funds
     )
   }
 }
