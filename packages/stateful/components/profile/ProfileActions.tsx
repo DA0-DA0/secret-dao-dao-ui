@@ -148,7 +148,7 @@ export const ProfileActions = () => {
           )
 
         const encodeObjects = data.map((msg) =>
-          cwMsgToEncodeObject(msg, walletAddress)
+          cwMsgToEncodeObject(chain.chain_id, msg, walletAddress)
         )
         const tx = await signingCosmWasmClient.signAndBroadcast(
           walletAddress,

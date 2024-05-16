@@ -15,7 +15,7 @@ import {
   ActionContextType,
   ActionKey,
   ActionMaker,
-  CosmosMsgFor_Empty,
+  UnifiedCosmosMsg,
   UseDecodedCosmosMsg,
   UseDefaults,
   UseTransformToCosmos,
@@ -27,6 +27,7 @@ import { MsgExec } from '@dao-dao/types/protobuf/codegen/cosmos/authz/v1beta1/tx
 import {
   decodePolytoneExecuteMsg,
   getChainAddressForActionOptions,
+  getChainForChainId,
   isDecodedStargateMsg,
   maybeMakePolytoneExecuteMessage,
   objectMatchesStructure,
@@ -233,7 +234,7 @@ export const makeAuthzExecAction: ActionMaker<AuthzExecData> = (options) => {
 
       // Group adjacent messages by sender, preserving message order.
       const msgsPerSender = execMsg.msgs
-        .map((msg) => protobufToCwMsg(msg))
+        .map((msg) => protobufToCwMsg(getChainForChainId(chainId), msg))
         .reduce(
           (acc, { msg, sender }) => {
             const last = acc[acc.length - 1]
@@ -246,7 +247,7 @@ export const makeAuthzExecAction: ActionMaker<AuthzExecData> = (options) => {
           },
           [] as {
             sender: string
-            msgs: CosmosMsgFor_Empty[]
+            msgs: UnifiedCosmosMsg[]
           }[]
         )
 
@@ -276,7 +277,7 @@ export const makeAuthzExecAction: ActionMaker<AuthzExecData> = (options) => {
               typeUrl: MsgExec.typeUrl,
               value: {
                 grantee: getChainAddressForActionOptions(options, chainId),
-                msgs: msgs.map((msg) => cwMsgToProtobuf(msg, address)),
+                msgs: msgs.map((msg) => cwMsgToProtobuf(chainId, msg, address)),
               } as MsgExec,
             },
           })
