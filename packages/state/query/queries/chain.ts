@@ -4,8 +4,8 @@ import { QueryClient, queryOptions, skipToken } from '@tanstack/react-query'
 import { ChainId } from '@dao-dao/types'
 import { ModuleAccount } from '@dao-dao/types/protobuf/codegen/cosmos/auth/v1beta1/auth'
 import {
-  cosmWasmClientRouter,
   cosmosProtoRpcClientRouter,
+  getCosmWasmClientForChainId,
   getNativeTokenForChainId,
   isValidBech32Address,
   stargateClientRouter,
@@ -160,7 +160,7 @@ export const fetchBlockTimestamp = async ({
   chainId: string
   height: number
 }): Promise<number> => {
-  const client = await cosmWasmClientRouter.connect(chainId)
+  const client = await getCosmWasmClientForChainId(chainId)
   return new Date((await client.getBlock(height)).header.time).getTime()
 }
 
