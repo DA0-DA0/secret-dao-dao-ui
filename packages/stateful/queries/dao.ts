@@ -17,7 +17,6 @@ import {
   ProposalModule,
 } from '@dao-dao/types'
 import {
-  extractAddressFromMaybeSecretContractInfo,
   getDaoInfoForChainId,
   getFallbackImage,
   getSupportedChainConfig,
@@ -98,9 +97,6 @@ export const fetchDaoInfo = async (
     })
   )
 
-  const votingModuleAddress = extractAddressFromMaybeSecretContractInfo(
-    state.voting_module_address
-  )
   const coreVersion = parseContractVersion(state.version.version)
   const supportedFeatures = getSupportedFeatures(coreVersion)
 
@@ -132,7 +128,7 @@ export const fetchDaoInfo = async (
       : queryClient.fetchQuery(
           contractQueries.info(queryClient, {
             chainId,
-            address: votingModuleAddress,
+            address: state.voting_module,
           })
         ),
     // Check if indexer returned this already.
@@ -180,7 +176,7 @@ export const fetchDaoInfo = async (
       .fetchQuery(
         votingModuleQueries.isActive({
           chainId,
-          address: votingModuleAddress,
+          address: state.voting_module,
         })
       )
       // If isActive query fails, just assume it is.
@@ -189,7 +185,7 @@ export const fetchDaoInfo = async (
       .fetchQuery(
         votingModuleQueries.activeThresold(queryClient, {
           chainId,
-          address: votingModuleAddress,
+          address: state.voting_module,
         })
       )
       .then(({ active_threshold }) => active_threshold || null)
@@ -206,7 +202,7 @@ export const fetchDaoInfo = async (
     coreAddress,
     coreVersion,
     supportedFeatures,
-    votingModuleAddress,
+    votingModuleAddress: state.voting_module,
     votingModuleContractName,
     proposalModules,
     admin: state.admin,
